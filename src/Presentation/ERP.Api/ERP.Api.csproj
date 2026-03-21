@@ -9,12 +9,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.13" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Modules\Inventory\ERP.Inventory.Infrastructure\ERP.Inventory.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\ERP.Identity.Infrastructure\ERP.Identity.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Modules\Inventory\ERP.Sales.Infrastructure\ERP.Sales.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Inventory\ERP.Inventory.Infrastructure\ERP.Inventory.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Sales\ERP.Sales.Infrastructure\ERP.Sales.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

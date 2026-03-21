@@ -1,0 +1,12 @@
+using ERP.Shared;
+namespace ERP.Inventory.Domain;
+
+public class Product : BaseEntity
+{
+    public required string SKU { get; set; } // รหัสสินค้า
+    public required string Name { get; set; }
+    public decimal BasePrice { get; set; }
+    public int CurrentStock { get; set; }
+    public Guid CategoryId { get; set; }
+    public Category? Category { get; set; }
+}
