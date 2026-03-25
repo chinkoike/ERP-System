@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ERP.Sales.Domain\ERP.Sales.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

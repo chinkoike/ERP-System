@@ -12,8 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ERP.Sales.Application\ERP.Sales.Application.csproj" />
     <ProjectReference Include="..\ERP.Sales.Domain\ERP.Sales.Domain.csproj" />
     <ProjectReference Include="..\..\Inventory\ERP.Inventory.Domain\ERP.Inventory.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\ERP.Shared.Infrastructure\ERP.Shared.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
