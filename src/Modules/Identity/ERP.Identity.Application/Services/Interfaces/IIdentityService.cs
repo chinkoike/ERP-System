@@ -1,35 +1,42 @@
-using ERP.Identity.Domain;
+using ERP.Identity.Application.DTOs;
+using ERP.Identity.Domain; // ยังต้องใช้ User ใน RegisterAsync (หรือจะเปลี่ยนเป็น UserDto ก็ได้)
 
 namespace ERP.Identity.Application.Services.Interfaces;
 
 public interface IIdentityService
 {
-    Task<User?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<User?> GetUserByUsernameAsync(string username, CancellationToken cancellationToken = default);
-    Task<User?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
-    Task<IEnumerable<User>> GetAllUsersAsync(CancellationToken cancellationToken = default);
-    Task<IEnumerable<User>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
-    Task CreateUserAsync(User user, CancellationToken cancellationToken = default);
-    Task UpdateUserAsync(User user, CancellationToken cancellationToken = default);
-    Task DeleteUserAsync(User user, CancellationToken cancellationToken = default);
+    // User Operations
+    Task<UserDto?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<UserDto?> GetUserByUsernameAsync(string username, CancellationToken cancellationToken = default);
+    Task<UserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<IEnumerable<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<UserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
+    Task CreateUserAsync(UserDto userDto, CancellationToken cancellationToken = default);
+    Task UpdateUserAsync(UserDto userDto, CancellationToken cancellationToken = default);
+    Task DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 
-    Task<Role?> GetRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Role?> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default);
-    Task<IEnumerable<Role>> GetAllRolesAsync(CancellationToken cancellationToken = default);
-    Task CreateRoleAsync(Role role, CancellationToken cancellationToken = default);
-    Task UpdateRoleAsync(Role role, CancellationToken cancellationToken = default);
-    Task DeleteRoleAsync(Role role, CancellationToken cancellationToken = default);
+    // Role Operations
+    Task<RoleDto?> GetRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<RoleDto?> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default);
+    Task<IEnumerable<RoleDto>> GetAllRolesAsync(CancellationToken cancellationToken = default);
+    Task CreateRoleAsync(RoleDto roleDto, CancellationToken cancellationToken = default);
+    Task UpdateRoleAsync(RoleDto roleDto, CancellationToken cancellationToken = default);
+    Task DeleteRoleAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByRoleNameAsync(string name, CancellationToken cancellationToken = default);
-    Task<User> RegisterAsync(string username, string email, CancellationToken cancellationToken = default);
-    Task<UserRole?> GetUserRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<UserRole>> GetUserRolesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<UserRole>> GetUserRolesByRoleIdAsync(Guid roleId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<UserRole>> GetAllUserRolesAsync(CancellationToken cancellationToken = default);
-    Task CreateUserRoleAsync(UserRole userRole, CancellationToken cancellationToken = default);
-    Task UpdateUserRoleAsync(UserRole userRole, CancellationToken cancellationToken = default);
-    Task DeleteUserRoleAsync(UserRole userRole, CancellationToken cancellationToken = default);
+
+    // Specialized Logic
+    Task<UserDto> RegisterAsync(string username, string email, CancellationToken cancellationToken = default);
+
+    // UserRole Operations
+    Task<UserRoleDto?> GetUserRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<UserRoleDto>> GetUserRolesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<UserRoleDto>> GetUserRolesByRoleIdAsync(Guid roleId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<UserRoleDto>> GetAllUserRolesAsync(CancellationToken cancellationToken = default);
+    Task CreateUserRoleAsync(UserRoleDto userRoleDto, CancellationToken cancellationToken = default);
+    Task UpdateUserRoleAsync(UserRoleDto userRoleDto, CancellationToken cancellationToken = default);
+    Task DeleteUserRoleAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByUserAndRoleAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
     Task AssignRoleToUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
     Task RemoveRoleFromUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);

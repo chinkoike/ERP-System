@@ -245,21 +245,15 @@ public class SalesService : ISalesService
 
     public async Task CreateOrderWithUserAsync(string username, string email, string productSku, int quantity, CancellationToken cancellationToken = default)
     {
-        // 1. จัดการข้อมูลนอกโมดูล Sales ก่อน (ห้ามใช้ UnitOfWork ของ Sales คุม)
 
-        // สร้าง/ตรวจสอบ User ผ่าน Identity Service
-        // สมมติว่า RegisterAsync จะคืนค่า User กลับมา หรือเช็คว่าถ้ามีแล้วก็ดึงมา
         await _identityService.RegisterAsync(username, email, cancellationToken);
-        // ดึงข้อมูล Product ผ่าน Inventory Service
         var product = await _inventoryService.GetProductBySkuAsync(productSku, cancellationToken);
         if (product == null) throw new Exception("ไม่พบสินค้าในระบบ");
 
-        // 2. เริ่มทำงานในส่วนของ Sales Module (เปิด Transaction เฉพาะของ Sales)
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // 3. สร้าง Customer (คนละตารางกับ User ใน Identity นะ เป็นตารางใน Sales)
             var customerRepository = _unitOfWork.Repository<Customer>();
             var newCustomer = new Customer
             {
@@ -270,7 +264,6 @@ public class SalesService : ISalesService
             };
             await customerRepository.AddAsync(newCustomer, cancellationToken);
 
-            // 4. สร้าง Order
             var orderRepository = _unitOfWork.Repository<Order>();
             var newOrder = new Order
             {
@@ -283,7 +276,6 @@ public class SalesService : ISalesService
             };
             await orderRepository.AddAsync(newOrder, cancellationToken);
 
-            // 5. สร้าง OrderItem
             var orderItemRepository = _unitOfWork.Repository<OrderItem>();
             var newOrderItem = new OrderItem
             {
@@ -296,7 +288,6 @@ public class SalesService : ISalesService
             };
             await orderItemRepository.AddAsync(newOrderItem, cancellationToken);
 
-            // บันทึกเฉพาะข้อมูลใน SalesDbContext
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
         }

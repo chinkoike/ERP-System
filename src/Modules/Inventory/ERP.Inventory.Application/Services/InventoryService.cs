@@ -1,6 +1,8 @@
 using ERP.Shared;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Inventory.Domain;
+using ERP.Inventory.Application.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Inventory.Application.Services;
 
@@ -13,135 +15,208 @@ public class InventoryService : IInventoryService
         _unitOfWork = unitOfWork;
     }
 
-    // Product operations
-    public async Task<Product?> GetProductByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    // --- Product Operations ---
+
+    public async Task<ProductDto?> GetProductByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        return await productRepository.GetByIdAsync(id, cancellationToken);
+        var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id, cancellationToken);
+        return product == null ? null : MapToProductDto(product);
     }
 
-    public async Task<Product?> GetProductBySkuAsync(string sku, CancellationToken cancellationToken = default)
+    public async Task<ProductDto?> GetProductBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        var products = await productRepository.FindAsync(p => p.SKU == sku, cancellationToken);
-        return products.FirstOrDefault();
+        var products = await _unitOfWork.Repository<Product>().FindAsync(p => p.SKU == sku, cancellationToken);
+        var product = products.FirstOrDefault();
+        return product == null ? null : MapToProductDto(product);
     }
 
-    public async Task<IEnumerable<Product>> GetAllProductsAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProductDto>> GetAllProductsAsync(CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        return await productRepository.GetAllAsync(cancellationToken);
+        var products = await _unitOfWork.Repository<Product>().GetAllAsync(cancellationToken);
+        return products.Select(MapToProductDto);
     }
 
-    public async Task<IEnumerable<Product>> GetProductsByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        return await productRepository.FindAsync(p => p.CategoryId == categoryId, cancellationToken);
+        var products = await _unitOfWork.Repository<Product>().FindAsync(p => p.CategoryId == categoryId, cancellationToken);
+        return products.Select(MapToProductDto);
     }
 
-    public async Task<IEnumerable<Product>> GetLowStockProductsAsync(int threshold = 10, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ProductDto>> GetLowStockProductsAsync(int threshold = 10, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        return await productRepository.FindAsync(p => p.CurrentStock <= threshold, cancellationToken);
+        var products = await _unitOfWork.Repository<Product>().FindAsync(p => p.CurrentStock <= threshold, cancellationToken);
+        return products.Select(MapToProductDto);
     }
 
-    public async Task CreateProductAsync(Product product, CancellationToken cancellationToken = default)
+    public async Task CreateProductAsync(ProductDto dto, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        await productRepository.AddAsync(product, cancellationToken);
+        var product = new Product
+        {
+            Name = dto.Name,
+            SKU = dto.SKU,
+            Description = dto.Description,
+            BasePrice = dto.BasePrice,
+            CategoryId = dto.CategoryId,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = dto.CreatedBy
+        };
+
+        await _unitOfWork.Repository<Product>().AddAsync(product, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateProductAsync(Product product, CancellationToken cancellationToken = default)
+    public async Task UpdateProductAsync(ProductDto dto, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        productRepository.Update(product);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
+        var repo = _unitOfWork.Repository<Product>();
+        var product = await repo.GetByIdAsync(dto.Id, cancellationToken);
 
-    public async Task DeleteProductAsync(Product product, CancellationToken cancellationToken = default)
-    {
-        var productRepository = _unitOfWork.Repository<Product>();
-        productRepository.Remove(product);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default)
-    {
-        var productRepository = _unitOfWork.Repository<Product>();
-        return await productRepository.ExistsAsync(p => p.SKU == sku, cancellationToken);
-    }
-
-    public async Task UpdateProductStockAsync(Guid productId, int newStock, CancellationToken cancellationToken = default)
-    {
-        var productRepository = _unitOfWork.Repository<Product>();
-        var product = await productRepository.GetByIdAsync(productId, cancellationToken);
         if (product != null)
         {
-            product.CurrentStock = newStock;
+            product.Name = dto.Name;
+            product.Description = dto.Description;
+            product.BasePrice = dto.BasePrice;
+            product.CategoryId = dto.CategoryId;
             product.LastModifiedAt = DateTime.UtcNow;
-            productRepository.Update(product);
+            product.LastModifiedBy = dto.UpdatedBy;
+
+            repo.Update(product);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 
-    // Category operations
-    public async Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeleteProductAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        return await categoryRepository.GetByIdAsync(id, cancellationToken);
+        var repo = _unitOfWork.Repository<Product>();
+        var product = await repo.GetByIdAsync(id, cancellationToken);
+        if (product != null)
+        {
+            repo.Remove(product);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
     }
 
-    public async Task<Category?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        var categories = await categoryRepository.FindAsync(c => c.Name == name, cancellationToken);
-        return categories.FirstOrDefault();
+        return await _unitOfWork.Repository<Product>().ExistsAsync(p => p.SKU == sku, cancellationToken);
     }
 
-    public async Task<IEnumerable<Category>> GetAllCategoriesAsync(CancellationToken cancellationToken = default)
+    public async Task UpdateProductStockAsync(Guid productId, int newStock, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        return await categoryRepository.GetAllAsync(cancellationToken);
+        var repo = _unitOfWork.Repository<Product>();
+        var product = await repo.GetByIdAsync(productId, cancellationToken);
+        if (product != null)
+        {
+            product.CurrentStock = newStock;
+            product.LastModifiedAt = DateTime.UtcNow;
+            repo.Update(product);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
     }
 
-    public async Task<IEnumerable<Category>> GetCategoriesWithProductsAsync(CancellationToken cancellationToken = default)
+    // --- Category Operations ---
+
+    public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        return await categoryRepository.GetAllAsync(cancellationToken);
+        var category = await _unitOfWork.Repository<Category>().GetByIdAsync(id, cancellationToken);
+        return category == null ? null : MapToCategoryDto(category);
     }
 
-    public async Task CreateCategoryAsync(Category category, CancellationToken cancellationToken = default)
+    public async Task<CategoryDto?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        await categoryRepository.AddAsync(category, cancellationToken);
+        var categories = await _unitOfWork.Repository<Category>().FindAsync(c => c.Name == name, cancellationToken);
+        var category = categories.FirstOrDefault();
+        return category == null ? null : MapToCategoryDto(category);
+    }
+
+    public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync(CancellationToken cancellationToken = default)
+    {
+        var categories = await _unitOfWork.Repository<Category>().GetAllAsync(cancellationToken);
+        return categories.Select(MapToCategoryDto);
+    }
+
+    public async Task<IEnumerable<CategoryDto>> GetCategoriesWithProductsAsync(CancellationToken cancellationToken = default)
+    {
+        // ในระบบจริงอาจจะใช้ Include แต่ Generic Repo ทั่วไปมักคืนค่าเป็นก้อนหลัก
+        var categories = await _unitOfWork.Repository<Category>().GetAllAsync(cancellationToken);
+        return categories.Select(MapToCategoryDto);
+    }
+
+    public async Task CreateCategoryAsync(CategoryDto dto, CancellationToken cancellationToken = default)
+    {
+        var category = new Category
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = dto.CreatedBy
+        };
+
+        await _unitOfWork.Repository<Category>().AddAsync(category, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateCategoryAsync(Category category, CancellationToken cancellationToken = default)
+    public async Task UpdateCategoryAsync(CategoryDto dto, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        categoryRepository.Update(category);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        var repo = _unitOfWork.Repository<Category>();
+        var category = await repo.GetByIdAsync(dto.Id, cancellationToken);
+        if (category != null)
+        {
+            category.Name = dto.Name;
+            category.Description = dto.Description;
+            category.LastModifiedAt = DateTime.UtcNow;
+            category.LastModifiedBy = dto.UpdatedBy;
+
+            repo.Update(category);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
     }
 
-    public async Task DeleteCategoryAsync(Category category, CancellationToken cancellationToken = default)
+    public async Task DeleteCategoryAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        categoryRepository.Remove(category);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        var repo = _unitOfWork.Repository<Category>();
+        var category = await repo.GetByIdAsync(id, cancellationToken);
+        if (category != null)
+        {
+            repo.Remove(category);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
     }
 
     public async Task<bool> ExistsByCategoryNameAsync(string name, CancellationToken cancellationToken = default)
     {
-        var categoryRepository = _unitOfWork.Repository<Category>();
-        return await categoryRepository.ExistsAsync(c => c.Name == name, cancellationToken);
+        return await _unitOfWork.Repository<Category>().ExistsAsync(c => c.Name == name, cancellationToken);
     }
 
     public async Task<int> GetProductCountByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
-        var productRepository = _unitOfWork.Repository<Product>();
-        var products = await productRepository.FindAsync(p => p.CategoryId == categoryId, cancellationToken);
+        var products = await _unitOfWork.Repository<Product>().FindAsync(p => p.CategoryId == categoryId, cancellationToken);
         return products.Count();
     }
+
+    // --- Helper Mapping Methods ---
+
+    private static ProductDto MapToProductDto(Product p) => new()
+    {
+        Id = p.Id,
+        Name = p.Name,
+        SKU = p.SKU,
+        Description = p.Description,
+        BasePrice = p.BasePrice,
+        CategoryId = p.CategoryId,
+        CreatedAt = p.CreatedAt,
+        CreatedBy = p.CreatedBy ?? "System",
+        UpdatedAt = p.LastModifiedAt,
+        UpdatedBy = p.LastModifiedBy
+    };
+
+    private static CategoryDto MapToCategoryDto(Category c) => new()
+    {
+        Id = c.Id,
+        Name = c.Name,
+        Description = c.Description,
+        CreatedAt = c.CreatedAt,
+        CreatedBy = c.CreatedBy ?? "System",
+        UpdatedAt = c.LastModifiedAt,
+        UpdatedBy = c.LastModifiedBy
+    };
 }
