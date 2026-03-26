@@ -1,19 +1,59 @@
+using BCrypt.Net;
 using ERP.Shared;
 using ERP.Identity.Application.Services.Interfaces;
 using ERP.Identity.Domain;
 using ERP.Identity.Application.DTOs;
-
 namespace ERP.Identity.Application.Services;
 
 public class IdentityService : IIdentityService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ITokenService _tokenService;
 
-    public IdentityService(IUnitOfWork unitOfWork)
+    public IdentityService(IUnitOfWork unitOfWork, TokenService tokenService)
     {
         _unitOfWork = unitOfWork;
+        _tokenService = tokenService;
     }
 
+
+    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest, CancellationToken cancellationToken = default)
+    {
+        var repo = _unitOfWork.Repository<User>();
+
+        var users = await repo.FindAsync(u => u.Username == loginRequest.Username, cancellationToken);
+        var user = users.FirstOrDefault();
+
+        if (user == null || !user.IsActive)
+        {
+            return new AuthResponseDto { IsSuccess = false, Message = "Invalid username or password." };
+        }
+
+
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash);
+
+        if (!isPasswordValid)
+        {
+            return new AuthResponseDto { IsSuccess = false, Message = "Invalid username or password." };
+        }
+
+        var userRoles = await _unitOfWork.Repository<UserRole>()
+            .FindAsync(ur => ur.UserId == user.Id, cancellationToken);
+
+        var roleIds = userRoles.Select(ur => ur.RoleId).ToList();
+        var roles = await _unitOfWork.Repository<Role>()
+            .FindAsync(r => roleIds.Contains(r.Id), cancellationToken);
+        var rolesList = roles.Select(r => r.Name).ToList();
+        var token = _tokenService.GenerateToken(MapToUserDto(user), rolesList);
+        return new AuthResponseDto
+        {
+            IsSuccess = true,
+            Message = "Login successful",
+            User = MapToUserDto(user),
+            Roles = roles.Select(r => r.Name).ToList(),
+            Token = token
+        };
+    }
     // --- User Operations ---
 
     public async Task<UserDto?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)

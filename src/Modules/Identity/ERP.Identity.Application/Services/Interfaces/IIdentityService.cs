@@ -40,4 +40,6 @@ public interface IIdentityService
     Task<bool> ExistsByUserAndRoleAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
     Task AssignRoleToUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
     Task RemoveRoleFromUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default);
+
+    Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest, CancellationToken cancellationToken = default);
 }
