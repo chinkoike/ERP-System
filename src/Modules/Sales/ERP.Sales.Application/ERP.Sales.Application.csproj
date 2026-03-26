@@ -15,6 +15,8 @@
     <ProjectReference Include="..\..\..\Modules\Inventory\ERP.Inventory.Domain\ERP.Inventory.Domain.csproj" />
     <ProjectReference Include="..\ERP.Sales.Domain\ERP.Sales.Domain.csproj" />
     <ProjectReference Include="..\..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
+  <ProjectReference Include="..\..\..\Modules\Inventory\ERP.Inventory.Application\ERP.Inventory.Application.csproj" />
+  <ProjectReference Include="..\..\..\Modules\Identity\ERP.Identity.Application\ERP.Identity.Application.csproj" />
   </ItemGroup>
 
 </Project>

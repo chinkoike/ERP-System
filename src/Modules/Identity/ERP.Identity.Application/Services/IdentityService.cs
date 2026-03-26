@@ -45,7 +45,29 @@ public class IdentityService : IIdentityService
         var userRepository = _unitOfWork.Repository<User>();
         return await userRepository.FindAsync(u => u.IsActive, cancellationToken);
     }
+    public async Task<User> RegisterAsync(string username, string email, CancellationToken cancellationToken = default)
+    {
+        var userRepository = _unitOfWork.Repository<User>();
 
+        // เช็คก่อนว่ามี Email นี้หรือยัง เพื่อป้องกัน Data Duplicate
+        var existingUsers = await userRepository.FindAsync(u => u.Email == email, cancellationToken);
+        var existingUser = existingUsers.FirstOrDefault();
+        if (existingUser != null) return existingUser;
+
+        var newUser = new User
+        {
+            Username = username,
+            Email = email,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "System"
+        };
+
+        await userRepository.AddAsync(newUser, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken); // บันทึกลง Identity Database
+
+        return newUser;
+    }
     public async Task CreateUserAsync(User user, CancellationToken cancellationToken = default)
     {
         var userRepository = _unitOfWork.Repository<User>();

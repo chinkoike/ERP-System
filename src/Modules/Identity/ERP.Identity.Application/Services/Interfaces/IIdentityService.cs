@@ -22,7 +22,7 @@ public interface IIdentityService
     Task UpdateRoleAsync(Role role, CancellationToken cancellationToken = default);
     Task DeleteRoleAsync(Role role, CancellationToken cancellationToken = default);
     Task<bool> ExistsByRoleNameAsync(string name, CancellationToken cancellationToken = default);
-
+    Task<User> RegisterAsync(string username, string email, CancellationToken cancellationToken = default);
     Task<UserRole?> GetUserRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<UserRole>> GetUserRolesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<UserRole>> GetUserRolesByRoleIdAsync(Guid roleId, CancellationToken cancellationToken = default);

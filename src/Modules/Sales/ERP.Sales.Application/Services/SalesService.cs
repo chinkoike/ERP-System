@@ -5,6 +5,8 @@ using ERP.Sales.Domain;
 using ERP.Sales.Application.DTOs;
 using ERP.Identity.Domain;
 using ERP.Inventory.Domain;
+using ERP.Inventory.Application.Services.Interfaces;
+using ERP.Identity.Application.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERP.Sales.Application.Services;
@@ -12,10 +14,17 @@ namespace ERP.Sales.Application.Services;
 public class SalesService : ISalesService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IIdentityService _identityService;
+    private readonly IInventoryService _inventoryService;
 
-    public SalesService(IUnitOfWork unitOfWork)
+    public SalesService(
+    IUnitOfWork unitOfWork,
+    IIdentityService identityService,
+    IInventoryService inventoryService)
     {
         _unitOfWork = unitOfWork;
+        _identityService = identityService;
+        _inventoryService = inventoryService;
     }
 
     // Customer operations
@@ -236,31 +245,21 @@ public class SalesService : ISalesService
 
     public async Task CreateOrderWithUserAsync(string username, string email, string productSku, int quantity, CancellationToken cancellationToken = default)
     {
-        // เริ่ม Transaction
+        // 1. จัดการข้อมูลนอกโมดูล Sales ก่อน (ห้ามใช้ UnitOfWork ของ Sales คุม)
+
+        // สร้าง/ตรวจสอบ User ผ่าน Identity Service
+        // สมมติว่า RegisterAsync จะคืนค่า User กลับมา หรือเช็คว่าถ้ามีแล้วก็ดึงมา
+        await _identityService.RegisterAsync(username, email, cancellationToken);
+        // ดึงข้อมูล Product ผ่าน Inventory Service
+        var product = await _inventoryService.GetProductBySkuAsync(productSku, cancellationToken);
+        if (product == null) throw new Exception("ไม่พบสินค้าในระบบ");
+
+        // 2. เริ่มทำงานในส่วนของ Sales Module (เปิด Transaction เฉพาะของ Sales)
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // 1. สร้าง User ใหม่ (Identity Module)
-            var userRepository = _unitOfWork.Repository<ERP.Identity.Domain.User>();
-            var newUser = new ERP.Identity.Domain.User
-            {
-                Username = username,
-                Email = email,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "System"
-            };
-            await userRepository.AddAsync(newUser, cancellationToken);
-
-            // 2. ค้นหา Product (Inventory Module)
-            var productRepository = _unitOfWork.Repository<ERP.Inventory.Domain.Product>();
-            var products = await productRepository.FindAsync(p => p.SKU == productSku, cancellationToken);
-            var product = products.FirstOrDefault();
-            if (product == null)
-                throw new Exception("Product not found");
-
-            // 3. สร้าง Customer จาก User (Sales Module)
+            // 3. สร้าง Customer (คนละตารางกับ User ใน Identity นะ เป็นตารางใน Sales)
             var customerRepository = _unitOfWork.Repository<Customer>();
             var newCustomer = new Customer
             {
@@ -271,25 +270,25 @@ public class SalesService : ISalesService
             };
             await customerRepository.AddAsync(newCustomer, cancellationToken);
 
-            // 4. สร้าง Order (Sales Module)
+            // 4. สร้าง Order
             var orderRepository = _unitOfWork.Repository<Order>();
             var newOrder = new Order
             {
-                OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 8)}",
+                OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}",
                 CustomerId = newCustomer.Id,
                 OrderDate = DateTime.UtcNow,
-                TotalAmount = product.BasePrice * quantity,
+                TotalAmount = product.BasePrice * quantity, // ใช้ราคาที่ดึงมาจาก Inventory Service
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "System"
             };
             await orderRepository.AddAsync(newOrder, cancellationToken);
 
-            // 5. สร้าง OrderItem (Sales Module)
+            // 5. สร้าง OrderItem
             var orderItemRepository = _unitOfWork.Repository<OrderItem>();
             var newOrderItem = new OrderItem
             {
                 OrderId = newOrder.Id,
-                ProductId = product.Id,
+                ProductId = product.Id, // ID จาก Inventory
                 Quantity = quantity,
                 UnitPrice = product.BasePrice,
                 CreatedAt = DateTime.UtcNow,
@@ -297,15 +296,12 @@ public class SalesService : ISalesService
             };
             await orderItemRepository.AddAsync(newOrderItem, cancellationToken);
 
-            // บันทึกการเปลี่ยนแปลงทั้งหมด
+            // บันทึกเฉพาะข้อมูลใน SalesDbContext
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            // ยืนยัน Transaction
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception)
         {
-            // ยกเลิก Transaction หากเกิดข้อผิดพลาด
             await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             throw;
         }
