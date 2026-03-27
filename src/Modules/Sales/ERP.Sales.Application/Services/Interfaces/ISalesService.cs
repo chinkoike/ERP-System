@@ -35,5 +35,5 @@ public interface ISalesService
     Task AddOrderItemsRangeAsync(IEnumerable<OrderItem> orderItems, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default);
     Task<OrderSummaryDto> GetOrderSummaryAsync(Guid orderId, CancellationToken cancellationToken = default);
-    Task CreateOrderWithUserAsync(string username, string email, string productSku, int quantity, CancellationToken cancellationToken = default);
+    Task CreateOrderWithUserAsync(string username, string email, string password, string productSku, int quantity, CancellationToken cancellationToken = default);
 }

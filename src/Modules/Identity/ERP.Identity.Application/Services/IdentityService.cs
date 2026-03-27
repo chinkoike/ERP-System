@@ -88,24 +88,50 @@ public class IdentityService : IIdentityService
         return users.Select(MapToUserDto);
     }
 
-    public async Task<UserDto> RegisterAsync(string username, string email, CancellationToken cancellationToken = default)
+    public async Task<UserDto> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken = default)
     {
-        var repo = _unitOfWork.Repository<User>();
-        var existingUsers = await repo.FindAsync(u => u.Email == email, cancellationToken);
-        var existingUser = existingUsers.FirstOrDefault();
+        var userRepo = _unitOfWork.Repository<User>();
 
-        if (existingUser != null) return MapToUserDto(existingUser);
+        // 1. ตรวจสอบว่า Email หรือ Username ซ้ำไหม
+        var existingUsers = await userRepo.FindAsync(u => u.Email == email || u.Username == username, cancellationToken);
+        if (existingUsers.Any())
+        {
+            // แนะนำให้ Throw Exception เพื่อให้ Global Exception Handler จัดการส่ง 400 Bad Request กลับไป
+            throw new InvalidOperationException("Username or Email already exists.");
+        }
+
+        // 2. Hash รหัสผ่านด้วย BCrypt ก่อนบันทึก
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
         var newUser = new User
         {
             Username = username,
             Email = email,
+            PasswordHash = passwordHash, // เก็บตัวที่ Hash แล้วเท่านั้น
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = "System"
         };
 
-        await repo.AddAsync(newUser, cancellationToken);
+        await userRepo.AddAsync(newUser, cancellationToken);
+
+        // 3. (Optional) กำหนด Role เริ่มต้นให้ User
+        // สมมติว่าคุณมี Role ชื่อ "User" ในฐานข้อมูล
+        var roleRepo = _unitOfWork.Repository<Role>();
+        var defaultRoles = await roleRepo.FindAsync(r => r.Name == "User", cancellationToken);
+        var defaultRole = defaultRoles.FirstOrDefault();
+
+        if (defaultRole != null)
+        {
+            var userRole = new UserRole
+            {
+                User = newUser,
+                RoleId = defaultRole.Id
+            };
+            await _unitOfWork.Repository<UserRole>().AddAsync(userRole, cancellationToken);
+        }
+
+        // 4. บันทึกข้อมูลทั้งหมดลง Database (Unit of Work)
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return MapToUserDto(newUser);

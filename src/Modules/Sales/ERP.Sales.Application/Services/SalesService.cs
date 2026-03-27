@@ -243,10 +243,10 @@ public class SalesService : ISalesService
         };
     }
 
-    public async Task CreateOrderWithUserAsync(string username, string email, string productSku, int quantity, CancellationToken cancellationToken = default)
+    public async Task CreateOrderWithUserAsync(string username, string email, string pawword, string productSku, int quantity, CancellationToken cancellationToken = default)
     {
 
-        await _identityService.RegisterAsync(username, email, cancellationToken);
+        await _identityService.RegisterAsync(username, email, pawword, cancellationToken);
         var product = await _inventoryService.GetProductBySkuAsync(productSku, cancellationToken);
         if (product == null) throw new Exception("ไม่พบสินค้าในระบบ");
 
