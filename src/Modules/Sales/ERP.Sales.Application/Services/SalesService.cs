@@ -8,7 +8,7 @@ using ERP.Inventory.Domain;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Identity.Application.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-
+using ERP.Inventory.Application.DTOs;
 namespace ERP.Sales.Application.Services;
 
 public class SalesService : ISalesService
@@ -28,41 +28,104 @@ public class SalesService : ISalesService
     }
 
     // Customer operations
-    public async Task<Customer?> GetCustomerByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<CustomerDto?> GetCustomerByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var customerRepository = _unitOfWork.Repository<Customer>();
-        return await customerRepository.GetByIdAsync(id, cancellationToken);
+        var customer = await _unitOfWork.Repository<Customer>().GetByIdAsync(id, cancellationToken);
+
+        if (customer == null) return null;
+
+        return new CustomerDto
+        {
+            Id = customer.Id,
+            FirstName = customer.FirstName,
+            LastName = customer.LastName,
+            Email = customer.Email ?? string.Empty,
+            Phone = customer.Phone,
+            Address = customer.Address,
+            CreatedAt = customer.CreatedAt,
+            CreatedBy = customer.CreatedBy
+        };
     }
 
-    public async Task<Customer?> GetCustomerByEmailAsync(string email, CancellationToken cancellationToken = default)
+    public async Task<CustomerDto?> GetCustomerByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var customerRepository = _unitOfWork.Repository<Customer>();
-        var customers = await customerRepository.FindAsync(c => c.Email == email, cancellationToken);
-        return customers.FirstOrDefault();
+        var customers = await _unitOfWork.Repository<Customer>().FindAsync(c => c.Email == email, cancellationToken);
+        var customer = customers.FirstOrDefault();
+
+        if (customer == null) return null;
+
+        return new CustomerDto
+        {
+            Id = customer.Id,
+            FirstName = customer.FirstName,
+            LastName = customer.LastName,
+            Email = customer.Email ?? string.Empty,
+            Phone = customer.Phone,
+            Address = customer.Address
+        };
     }
 
-    public async Task<IEnumerable<Customer>> GetAllCustomersAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CustomerDto>> GetAllCustomersAsync(CancellationToken ct = default)
     {
-        var customerRepository = _unitOfWork.Repository<Customer>();
-        return await customerRepository.GetAllAsync(cancellationToken);
+        var customers = await _unitOfWork.Repository<Customer>().GetAllAsync(ct);
+        return customers.Select(c => new CustomerDto
+        {
+            Id = c.Id,
+            FirstName = c.FirstName,
+            LastName = c.LastName,
+            Email = c.Email,
+            Phone = c.Phone,
+            Address = c.Address
+        });
     }
 
-    public async Task<IEnumerable<Customer>> GetCustomersWithOrdersAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<CustomerDto>> GetCustomersWithOrdersAsync(CancellationToken cancellationToken = default)
     {
-        var customerRepository = _unitOfWork.Repository<Customer>();
-        return await customerRepository.GetAllAsync(cancellationToken);
-    }
+        var customers = await _unitOfWork.Repository<Customer>().GetAllAsync(cancellationToken);
 
-    public async Task CreateCustomerAsync(Customer customer, CancellationToken cancellationToken = default)
+        return customers.Select(c => new CustomerDto
+        {
+            Id = c.Id,
+            FirstName = c.FirstName,
+            LastName = c.LastName,
+            Email = c.Email ?? string.Empty,
+            Phone = c.Phone,
+            Address = c.Address,
+
+        });
+    }
+    public async Task<Guid> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken cancellationToken = default)
     {
+        var customer = new Customer
+        {
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            Address = dto.Address,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "System"
+        };
+
         var customerRepository = _unitOfWork.Repository<Customer>();
         await customerRepository.AddAsync(customer, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-    }
 
-    public async Task UpdateCustomerAsync(Customer customer, CancellationToken cancellationToken = default)
+        return customer.Id;
+    }
+    public async Task UpdateCustomerAsync(Guid id, UpdateCustomerDto dto, CancellationToken cancellationToken = default)
     {
         var customerRepository = _unitOfWork.Repository<Customer>();
+        var customer = await customerRepository.GetByIdAsync(id, cancellationToken);
+
+        if (customer == null) throw new Exception("Customer not found");
+
+        customer.FirstName = dto.FirstName ?? customer.FirstName;
+        customer.LastName = dto.LastName ?? customer.LastName;
+        customer.Email = dto.Email ?? customer.Email;
+        customer.Phone = dto.Phone ?? customer.Phone;
+        customer.Address = dto.Address ?? customer.Address;
+
         customerRepository.Update(customer);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
@@ -81,6 +144,74 @@ public class SalesService : ISalesService
     }
 
     // Order operations
+    public async Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken cancellationToken = default)
+    {
+        await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            // 1. สร้างหัวบิล (Order Header)
+            var order = new Order
+            {
+                OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}",
+                CustomerId = dto.CustomerId,
+                OrderDate = DateTime.UtcNow,
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "System"
+            };
+
+            decimal totalAmount = 0;
+            var orderItems = new List<OrderItem>();
+
+            // 2. วนลูปจัดการรายการสินค้า
+            foreach (var itemDto in dto.Items)
+            {
+                // ดึงข้อมูลสินค้าเพื่อเช็คสต็อกและราคาล่าสุด
+                var product = await _inventoryService.GetProductByIdAsync(itemDto.ProductId, cancellationToken);
+                if (product == null) throw new Exception($"Product {itemDto.ProductId} not found");
+
+                // ตรวจสอบสต็อก (Business Logic)
+                if (product.StockQuantity < itemDto.Quantity)
+                    throw new Exception($"สินค้า {product.Name} มีสต็อกไม่พอ");
+
+                // สร้าง OrderItem
+                var orderItem = new OrderItem
+                {
+                    OrderId = order.Id,
+                    ProductId = itemDto.ProductId,
+                    Quantity = itemDto.Quantity,
+                    UnitPrice = product.BasePrice, // ใช้ราคาจริงจาก Inventory
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                orderItems.Add(orderItem);
+                totalAmount += orderItem.UnitPrice * orderItem.Quantity;
+
+                // 3. สั่งตัดสต็อกในโมดูล Inventory (Cross-module call)
+                // สมมติว่า InventoryService มีเมธอดอัปเดตสต็อก
+                await _inventoryService.UpdateProductStockAsync(new UpdateProductStockDto
+                {
+                    ProductId = itemDto.ProductId,
+                    QuantityChange = -itemDto.Quantity
+                }, cancellationToken);
+            }
+
+            order.TotalAmount = totalAmount;
+            order.Items = orderItems;
+
+            await _unitOfWork.Repository<Order>().AddAsync(order, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+            return order.Id;
+        }
+        catch (Exception)
+        {
+            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+            throw;
+        }
+    }
     public async Task<Order?> GetOrderByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var orderRepository = _unitOfWork.Repository<Order>();
@@ -100,10 +231,17 @@ public class SalesService : ISalesService
         return await orderRepository.GetAllAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<Order>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<OrderSummaryDto>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken ct = default)
     {
-        var orderRepository = _unitOfWork.Repository<Order>();
-        return await orderRepository.FindAsync(o => o.CustomerId == customerId, cancellationToken);
+        var orders = await _unitOfWork.Repository<Order>().FindAsync(o => o.CustomerId == customerId, ct);
+        return orders.Select(o => new OrderSummaryDto
+        {
+            OrderId = o.Id,
+            OrderNumber = o.OrderNumber,
+            OrderDate = o.OrderDate,
+            TotalAmount = o.TotalAmount,
+            Status = o.Status
+        });
     }
 
     public async Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -131,7 +269,47 @@ public class SalesService : ISalesService
         orderRepository.Update(order);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
+    public async Task<bool> UpdateOrderStatusAsync(Guid orderId, string newStatus, CancellationToken ct = default)
+    {
+        var repo = _unitOfWork.Repository<Order>();
+        var order = await repo.GetByIdAsync(orderId, ct);
+        if (order == null) return false;
 
+        order.Status = newStatus;
+        repo.Update(order);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
+    }
+    public async Task<bool> ValidateStockAvailabilityAsync(CreateOrderDto dto, CancellationToken ct = default)
+    {
+        foreach (var item in dto.Items)
+        {
+            var product = await _inventoryService.GetProductByIdAsync(item.ProductId, ct);
+            if (product == null || product.StockQuantity < item.Quantity)
+                return false;
+        }
+        return true;
+    }
+
+    public async Task<IEnumerable<OrderSummaryDto>> GetRecentOrdersAsync(int count, CancellationToken ct = default)
+    {
+        var orders = await _unitOfWork.Repository<Order>().GetAllAsync(ct);
+        return orders.OrderByDescending(o => o.OrderDate)
+                     .Take(count)
+                     .Select(o => new OrderSummaryDto
+                     {
+                         OrderId = o.Id,
+                         OrderNumber = o.OrderNumber,
+                         TotalAmount = o.TotalAmount,
+                         Status = o.Status
+                     });
+    }
+
+    public async Task<int> GetPendingOrdersCountAsync(CancellationToken ct = default)
+    {
+        var orders = await _unitOfWork.Repository<Order>().FindAsync(o => o.Status == "Pending", ct);
+        return orders.Count();
+    }
     public async Task DeleteOrderAsync(Order order, CancellationToken cancellationToken = default)
     {
         var orderRepository = _unitOfWork.Repository<Order>();
@@ -216,48 +394,42 @@ public class SalesService : ISalesService
         return orderItems.Sum(oi => oi.UnitPrice * oi.Quantity);
     }
 
-    public async Task<OrderSummaryDto> GetOrderSummaryAsync(Guid orderId, CancellationToken cancellationToken = default)
+    public async Task<OrderSummaryDto?> GetOrderSummaryAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
-        // Query ข้อมูล Order พร้อม Customer และ OrderItems
-        var orderRepository = _unitOfWork.Repository<Order>();
-        var order = await orderRepository.GetByIdAsync(orderId, cancellationToken);
+        var order = await _unitOfWork.Repository<Order>().GetByIdAsync(orderId, cancellationToken);
+        if (order == null) return null;
 
-        if (order == null)
-            throw new Exception("Order not found");
-
-        var customerRepository = _unitOfWork.Repository<Customer>();
-        var customer = await customerRepository.GetByIdAsync(order.CustomerId, cancellationToken);
-
-        var orderItemRepository = _unitOfWork.Repository<OrderItem>();
-        var orderItems = await orderItemRepository.FindAsync(oi => oi.OrderId == orderId, cancellationToken);
-        var itemsList = orderItems.ToList();
+        var customer = await _unitOfWork.Repository<Customer>().GetByIdAsync(order.CustomerId, cancellationToken);
+        var items = await _unitOfWork.Repository<OrderItem>().FindAsync(oi => oi.OrderId == orderId, cancellationToken);
 
         return new OrderSummaryDto
         {
             OrderId = order.Id,
             OrderNumber = order.OrderNumber,
-            CustomerName = customer?.Name ?? "Unknown",
+            CustomerName = customer != null
+            ? $"{customer.FirstName} {customer.LastName}"
+            : "Unknown",
             OrderDate = order.OrderDate,
             TotalAmount = order.TotalAmount,
-            ItemCount = itemsList.Count()
+            ItemCount = items.Count(),
+            Status = order.Status // เพิ่ม Status เข้าไปด้วย
         };
     }
-
-    public async Task CreateOrderWithUserAsync(string username, string email, string pawword, string productSku, int quantity, CancellationToken cancellationToken = default)
+    public async Task CreateOrderWithUserAsync(string username, string email, string password, string productSku, int quantity, CancellationToken cancellationToken = default)
     {
 
-        await _identityService.RegisterAsync(username, email, pawword, cancellationToken);
+        await _identityService.RegisterAsync(username, email, password, cancellationToken);
         var product = await _inventoryService.GetProductBySkuAsync(productSku, cancellationToken);
         if (product == null) throw new Exception("ไม่พบสินค้าในระบบ");
 
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
         try
         {
             var customerRepository = _unitOfWork.Repository<Customer>();
             var newCustomer = new Customer
             {
-                Name = username,
+                FirstName = username,
+                LastName = "-",
                 Email = email,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "System"
