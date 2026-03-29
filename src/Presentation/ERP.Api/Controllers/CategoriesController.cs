@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Inventory.Application.DTOs;
-
 namespace ERP.Api.Controllers;
 
 [ApiController]
@@ -16,84 +15,58 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<CategoryDto>> GetById(Guid id)
+    public async Task<ActionResult<CategoryDto>> GetById(Guid id, CancellationToken ct)
     {
-        var category = await _inventoryService.GetCategoryByIdAsync(id);
-        if (category == null)
-            return NotFound();
-
-        return Ok(category);
-    }
-
-    [HttpGet("by-name/{name}")]
-    public async Task<ActionResult<CategoryDto>> GetByName(string name)
-    {
-        var category = await _inventoryService.GetCategoryByNameAsync(name);
-        if (category == null)
-            return NotFound();
-
+        var category = await _inventoryService.GetCategoryByIdAsync(id, ct);
+        if (category == null) return NotFound();
         return Ok(category);
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll()
+    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll(CancellationToken ct)
     {
-        var categories = await _inventoryService.GetAllCategoriesAsync();
+        var categories = await _inventoryService.GetAllCategoriesAsync(ct);
         return Ok(categories);
     }
 
-    [HttpGet("with-products")]
-    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetWithProducts()
-    {
-        var categories = await _inventoryService.GetCategoriesWithProductsAsync();
-        return Ok(categories);
-    }
-
+    // แนะนำให้ใช้ CreateCategoryDto แทน CategoryDto เพื่อความปลอดภัย
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CategoryDto categoryDto)
+    public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(categoryDto.Name))
+        // ตรวจสอบความถูกต้องเบื้องต้น (Data Annotation ใน DTO จะช่วยเช็คให้อีกแรง)
+        if (string.IsNullOrWhiteSpace(dto.Name))
             return BadRequest("Category name is required.");
 
-        await _inventoryService.CreateCategoryAsync(categoryDto);
+        var categoryId = await _inventoryService.CreateCategoryAsync(dto, ct);
 
-        // ส่งกลับ 201 Created พร้อมบอก Path ในการดูข้อมูลที่เพิ่งสร้าง
-        return CreatedAtAction(nameof(GetById), new { id = categoryDto.Id }, categoryDto);
+        // ดึงข้อมูลที่เพิ่งสร้างเพื่อส่งกลับไป (หรือจะสร้าง DTO ใหม่เพื่อ return ก็ได้)
+        return CreatedAtAction(nameof(GetById), new { id = categoryId }, new { id = categoryId, name = dto.Name });
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] CategoryDto categoryDto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryDto dto, CancellationToken ct)
     {
-        if (id != categoryDto.Id)
-            return BadRequest("ID mismatch");
+        // เรียกใช้ Service สำหรับการ Update
+        var result = await _inventoryService.UpdateCategoryAsync(id, dto, ct);
+        if (!result) return NotFound();
 
-        await _inventoryService.UpdateCategoryAsync(categoryDto);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var exists = await _inventoryService.GetCategoryByIdAsync(id);
-        if (exists == null)
-            return NotFound();
+        // ไม่ต้องดึง GetById มาเช็คซ้ำที่นี่ (ไปเช็คใน Service แล้ว throw exception หรือ return false จะคลีนกว่า)
+        var result = await _inventoryService.DeleteCategoryAsync(id, ct);
+        if (!result) return NotFound();
 
-        // เรียกใช้ Delete ผ่าน ID ตามที่เราแก้ใน Service
-        await _inventoryService.DeleteCategoryAsync(id);
         return NoContent();
     }
 
     [HttpGet("{id}/product-count")]
-    public async Task<IActionResult> GetProductCount(Guid id)
+    public async Task<IActionResult> GetProductCount(Guid id, CancellationToken ct)
     {
-        var count = await _inventoryService.GetProductCountByCategoryAsync(id);
+        var count = await _inventoryService.GetProductCountByCategoryAsync(id, ct);
         return Ok(new { categoryId = id, productCount = count });
-    }
-
-    [HttpGet("exists/name/{name}")]
-    public async Task<IActionResult> ExistsByName(string name)
-    {
-        var exists = await _inventoryService.ExistsByCategoryNameAsync(name);
-        return Ok(new { exists });
     }
 }

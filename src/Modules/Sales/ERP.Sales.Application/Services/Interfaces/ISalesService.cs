@@ -9,6 +9,7 @@ public interface ISalesService
     Task<IEnumerable<CustomerDto>> GetAllCustomersAsync(CancellationToken ct = default);
     Task<Guid> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken ct = default);
     Task UpdateCustomerAsync(Guid id, UpdateCustomerDto dto, CancellationToken ct = default);
+    Task<bool> DeleteCustomerAsync(Guid id, CancellationToken ct = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default);
 
     // === Order Core Logic (หัวใจของระบบ) ===

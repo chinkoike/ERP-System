@@ -165,50 +165,45 @@ public class InventoryService : IInventoryService
         return products.Count();
     }
 
-    public async Task<CategoryDto> CreateCategoryAsync(CategoryDto dto, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateCategoryAsync(CreateCategoryDto dto, CancellationToken ct)
     {
         var category = new Category
         {
-            Id = Guid.NewGuid(),
             Name = dto.Name,
             Description = dto.Description,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = dto.CreatedBy ?? "System"
+            CreatedAt = DateTime.UtcNow
         };
-
-        await _unitOfWork.Repository<Category>().AddAsync(category, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return MapToCategoryDto(category);
+        await _unitOfWork.Repository<Category>().AddAsync(category, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return category.Id;
     }
 
-    public async Task UpdateCategoryAsync(CategoryDto dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateCategoryAsync(Guid id, UpdateCategoryDto dto, CancellationToken ct = default)
     {
         var repo = _unitOfWork.Repository<Category>();
-        var category = await repo.GetByIdAsync(dto.Id, cancellationToken);
+        var category = await repo.GetByIdAsync(id, ct);
 
-        if (category != null)
-        {
-            category.Name = dto.Name;
-            category.Description = dto.Description;
-            category.LastModifiedAt = DateTime.UtcNow;
-            category.LastModifiedBy = dto.UpdatedBy;
+        if (category == null) return false;
 
-            repo.Update(category);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        category.Name = dto.Name ?? category.Name;
+        category.Description = dto.Description ?? category.Description;
+        category.LastModifiedAt = DateTime.UtcNow;
+
+        repo.Update(category);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
     }
 
-    public async Task DeleteCategoryAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteCategoryAsync(Guid id, CancellationToken ct = default)
     {
         var repo = _unitOfWork.Repository<Category>();
-        var category = await repo.GetByIdAsync(id, cancellationToken);
+        var category = await repo.GetByIdAsync(id, ct);
 
-        if (category != null)
-        {
-            repo.Remove(category);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        if (category == null) return false;
+
+        repo.Remove(category);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
     }
 
     // --- Helper Mapping Methods ---

@@ -130,11 +130,18 @@ public class SalesService : ISalesService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteCustomerAsync(Customer customer, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteCustomerAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var customerRepository = _unitOfWork.Repository<Customer>();
+
+        var customer = await customerRepository.GetByIdAsync(id, cancellationToken);
+
+        if (customer == null) return false;
+
         customerRepository.Remove(customer);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return true; // ลบสำเร็จ
     }
 
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)

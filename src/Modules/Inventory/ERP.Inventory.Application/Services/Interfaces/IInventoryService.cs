@@ -32,7 +32,7 @@ public interface IInventoryService
     Task<int> GetProductCountByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
 
     // --- Category Command Operations ---
-    Task<CategoryDto> CreateCategoryAsync(CategoryDto categoryDto, CancellationToken cancellationToken = default);
-    Task UpdateCategoryAsync(CategoryDto categoryDto, CancellationToken cancellationToken = default);
-    Task DeleteCategoryAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Guid> CreateCategoryAsync(CreateCategoryDto dto, CancellationToken ct = default);
+    Task<bool> UpdateCategoryAsync(Guid id, UpdateCategoryDto dto, CancellationToken ct = default);
+    Task<bool> DeleteCategoryAsync(Guid id, CancellationToken ct = default);
 }
