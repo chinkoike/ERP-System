@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Sales.Application.Services.Interfaces;
-using ERP.Sales.Domain;
-
+using ERP.Sales.Application.DTOs;
+using ERP.Sales.Application.DTOs.Requests;
 namespace ERP.Api.Controllers;
 
 [ApiController]
@@ -16,112 +16,80 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<OrderSummaryDto>> GetById(Guid id, CancellationToken ct)
     {
-        var order = await _salesService.GetOrderByIdAsync(id);
-        if (order == null)
-            return NotFound();
-        return Ok(order);
-    }
-
-    [HttpGet("by-number/{orderNumber}")]
-    public async Task<IActionResult> GetByOrderNumber(string orderNumber)
-    {
-        var order = await _salesService.GetOrderByOrderNumberAsync(orderNumber);
-        if (order == null)
-            return NotFound();
+        // แนะนำให้ใช้ GetOrderSummary แทนการส่ง Entity Order ออกไปตรงๆ
+        var order = await _salesService.GetOrderSummaryAsync(id, ct);
+        if (order == null) return NotFound();
         return Ok(order);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<OrderSummaryDto>>> GetAll(CancellationToken ct)
     {
-        var orders = await _salesService.GetAllOrdersAsync();
+        // ใช้ DTO สรุปรายการเพื่อลดภาระ Database และ Network
+        var orders = await _salesService.GetRecentOrdersAsync(50, ct);
         return Ok(orders);
     }
 
     [HttpGet("by-customer/{customerId}")]
-    public async Task<IActionResult> GetByCustomer(Guid customerId)
+    public async Task<ActionResult<IEnumerable<OrderSummaryDto>>> GetByCustomer(Guid customerId, CancellationToken ct)
     {
-        var orders = await _salesService.GetOrdersByCustomerAsync(customerId);
+        var orders = await _salesService.GetOrdersByCustomerAsync(customerId, ct);
         return Ok(orders);
     }
 
-    [HttpGet("by-date-range")]
-    public async Task<IActionResult> GetByDateRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
-    {
-        var orders = await _salesService.GetOrdersByDateRangeAsync(startDate, endDate);
-        return Ok(orders);
-    }
-
-    [HttpGet("pending")]
-    public async Task<IActionResult> GetPending()
-    {
-        var orders = await _salesService.GetPendingOrdersAsync();
-        return Ok(orders);
-    }
-
+    // จุดสำคัญ: เปลี่ยนจากการรับ Order Entity เป็น CreateOrderDto
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Order order)
+    public async Task<IActionResult> Create([FromBody] CreateOrderDto dto, CancellationToken ct)
     {
-        await _salesService.CreateOrderAsync(order);
-        return CreatedAtAction(nameof(GetById), new { id = order.Id }, order);
+        try
+        {
+            var orderId = await _salesService.PlaceOrderAsync(dto, ct);
+            return CreatedAtAction(nameof(GetById), new { id = orderId }, new { id = orderId });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] Order order)
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] string newStatus, CancellationToken ct)
     {
-        if (id != order.Id)
-            return BadRequest();
-
-        await _salesService.UpdateOrderAsync(order);
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var order = await _salesService.GetOrderByIdAsync(id);
-        if (order == null)
-            return NotFound();
-
-        await _salesService.DeleteOrderAsync(order);
+        var result = await _salesService.UpdateOrderStatusAsync(id, newStatus, ct);
+        if (!result) return NotFound();
         return NoContent();
     }
 
     [HttpGet("total-sales")]
-    public async Task<IActionResult> GetTotalSales([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+    public async Task<IActionResult> GetTotalSales([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, CancellationToken ct)
     {
-        var total = await _salesService.GetTotalSalesAsync(startDate, endDate);
+        var total = await _salesService.GetTotalSalesAsync(startDate, endDate, ct);
         return Ok(new { totalSales = total });
     }
 
-    [HttpGet("exists/order-number/{orderNumber}")]
-    public async Task<IActionResult> ExistsByOrderNumber(string orderNumber)
-    {
-        var exists = await _salesService.ExistsByOrderNumberAsync(orderNumber);
-        return Ok(new { exists });
-    }
-
     [HttpPost("create-with-user")]
-    public async Task<IActionResult> CreateOrderWithUser([FromBody] CreateOrderWithUserRequest request)
+    public async Task<IActionResult> CreateOrderWithUser([FromBody] CreateOrderWithUserRequest request, CancellationToken ct)
     {
-        await _salesService.CreateOrderWithUserAsync(request.Username, request.Email, request.ProductSku, request.Quantity);
-        return Ok(new { message = "Order created successfully with new user" });
-    }
+        try
+        {
+            // แก้ไข parameter ให้ตรงกับ Service (username, email, password, sku, qty)
+            await _salesService.CreateOrderWithUserAsync(
+                request.Username,
+                request.Email,
+                request.Password, // เปลี่ยนจาก pawword เป็น Password
+                request.ProductSku,
+                request.Quantity,
+                ct);
 
-    [HttpGet("{id}/summary")]
-    public async Task<IActionResult> GetOrderSummary(Guid id)
-    {
-        var summary = await _salesService.GetOrderSummaryAsync(id);
-        return Ok(summary);
+            return Ok(new { message = "Order created successfully with new user" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
 
-public class CreateOrderWithUserRequest
-{
-    public string Username { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string ProductSku { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-}
+// ปรับปรุง Request DTO ให้รองรับ Password

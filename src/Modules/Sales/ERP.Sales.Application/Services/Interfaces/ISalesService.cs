@@ -14,7 +14,13 @@ public interface ISalesService
 
     // === Order Core Logic (หัวใจของระบบ) ===
 
-    // ใช้ CreateOrderDto เพื่อรับข้อมูลจากหน้าบ้าน และคืนค่าเป็น Guid ของบิลที่สร้างสำเร็จ
+    Task CreateOrderWithUserAsync(
+        string username,
+        string email,
+        string password, // ตรวจสอบว่าใน Service ใช้ชื่อ password หรือ pawword
+        string productSku,
+        int quantity,
+        CancellationToken cancellationToken = default);
     Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken ct = default);
 
     // การเปลี่ยนสถานะบิล (เช่น จาก Pending -> Paid -> Shipped)
