@@ -11,9 +11,9 @@ public interface IIdentityService
     Task<UserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<IEnumerable<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<UserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
-    Task CreateUserAsync(UserDto userDto, CancellationToken cancellationToken = default);
-    Task UpdateUserAsync(UserDto userDto, CancellationToken cancellationToken = default);
-    Task DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Guid> CreateUserAsync(CreateUserDto userDto, CancellationToken cancellationToken = default);
+    Task<bool> UpdateUserAsync(Guid id, UpdateUserDto userDto, CancellationToken cancellationToken = default);
+    Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 

@@ -137,47 +137,50 @@ public class IdentityService : IIdentityService
         return MapToUserDto(newUser);
     }
 
-    public async Task CreateUserAsync(UserDto dto, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateUserAsync(CreateUserDto dto, CancellationToken ct)
     {
         var user = new User
         {
+            Id = Guid.NewGuid(),
             Username = dto.Username,
             Email = dto.Email,
-            IsActive = dto.IsActive,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = dto.CreatedBy ?? "System"
+            // PasswordHash = dto.Password // อย่าลืมทำ Password Hashing นะครับ!
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
         };
 
-        await _unitOfWork.Repository<User>().AddAsync(user, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _unitOfWork.Repository<User>().AddAsync(user, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return user.Id;
     }
 
-    public async Task UpdateUserAsync(UserDto dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto dto, CancellationToken ct)
     {
         var repo = _unitOfWork.Repository<User>();
-        var user = await repo.GetByIdAsync(dto.Id, cancellationToken);
-        if (user != null)
-        {
-            user.Username = dto.Username;
-            user.Email = dto.Email;
-            user.IsActive = dto.IsActive;
-            user.LastModifiedAt = DateTime.UtcNow;
-            user.LastModifiedBy = dto.UpdatedBy ?? "System";
+        var user = await repo.GetByIdAsync(id, ct);
 
-            repo.Update(user);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        if (user == null) return false;
+
+        user.Email = dto.Email;
+        user.IsActive = dto.IsActive;
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
+
+
+        repo.Update(user);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return true;
     }
-
-    public async Task DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteUserAsync(Guid id, CancellationToken ct)
     {
         var repo = _unitOfWork.Repository<User>();
-        var user = await repo.GetByIdAsync(id, cancellationToken);
-        if (user != null)
-        {
-            repo.Remove(user);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        var user = await repo.GetByIdAsync(id, ct);
+        if (user == null) return false;
+
+        repo.Remove(user); // หรือ .Delete() ตามที่ Repository คุณมี
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
     }
 
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
@@ -211,44 +214,55 @@ public class IdentityService : IIdentityService
         return roles.Select(MapToRoleDto);
     }
 
-    public async Task CreateRoleAsync(RoleDto dto, CancellationToken cancellationToken = default)
+    // 1. เปลี่ยน Return Type จาก Task<Guid> เป็น Task<RoleDto> ให้ตรงกับ Interface
+    public async Task<RoleDto> CreateRoleAsync(CreateRoleDto dto, CancellationToken ct)
     {
+        // 2. สร้าง Entity จาก DTO
         var role = new Role
         {
+            Id = Guid.NewGuid(),
             Name = dto.Name,
-            Description = dto.Description,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = dto.CreatedBy ?? "System"
+            Description = dto.Description
+            // CreatedAt = DateTime.UtcNow // ถ้ามี
         };
-        await _unitOfWork.Repository<Role>().AddAsync(role, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // 3. บันทึกลงฐานข้อมูล
+        await _unitOfWork.Repository<Role>().AddAsync(role, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        // 4. สร้าง RoleDto เพื่อส่งกลับไป (ต้อง Return เป็น RoleDto ตามที่ Interface สั่ง)
+        return new RoleDto
+        {
+            Id = role.Id,
+            Name = role.Name,
+            Description = role.Description
+            // CreatedAt = role.CreatedAt
+        };
     }
 
-    public async Task UpdateRoleAsync(RoleDto dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateRoleAsync(Guid id, UpdateRoleDto dto, CancellationToken ct)
     {
         var repo = _unitOfWork.Repository<Role>();
-        var role = await repo.GetByIdAsync(dto.Id, cancellationToken);
-        if (role != null)
-        {
-            role.Name = dto.Name;
-            role.Description = dto.Description;
-            role.LastModifiedAt = DateTime.UtcNow;
-            role.LastModifiedBy = dto.UpdatedBy ?? "System";
+        var role = await repo.GetByIdAsync(id, ct);
+        if (role == null) return false;
 
-            repo.Update(role);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        role.Name = dto.Name;
+        role.Description = dto.Description;
+
+        repo.Update(role);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
     }
 
-    public async Task DeleteRoleAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteRoleAsync(Guid id, CancellationToken ct)
     {
         var repo = _unitOfWork.Repository<Role>();
-        var role = await repo.GetByIdAsync(id, cancellationToken);
-        if (role != null)
-        {
-            repo.Remove(role);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        var role = await repo.GetByIdAsync(id, ct);
+        if (role == null) return false;
+
+        repo.Remove(role); // หรือ .Delete()
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
     }
 
     public async Task<bool> ExistsByRoleNameAsync(string name, CancellationToken cancellationToken = default)

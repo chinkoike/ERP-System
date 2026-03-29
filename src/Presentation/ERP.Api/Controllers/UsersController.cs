@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Identity.Application.Services.Interfaces;
-using ERP.Identity.Domain;
+using ERP.Identity.Application.DTOs;
 
 namespace ERP.Api.Controllers;
 
@@ -16,85 +16,75 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<UserDto>> GetById(Guid id, CancellationToken ct)
     {
-        var user = await _identityService.GetUserByIdAsync(id);
-        if (user == null)
-            return NotFound();
+        var user = await _identityService.GetUserByIdAsync(id, ct);
+        if (user == null) return NotFound();
         return Ok(user);
     }
 
     [HttpGet("by-username/{username}")]
-    public async Task<IActionResult> GetByUsername(string username)
+    public async Task<ActionResult<UserDto>> GetByUsername(string username, CancellationToken ct)
     {
-        var user = await _identityService.GetUserByUsernameAsync(username);
-        if (user == null)
-            return NotFound();
-        return Ok(user);
-    }
-
-    [HttpGet("by-email/{email}")]
-    public async Task<IActionResult> GetByEmail(string email)
-    {
-        var user = await _identityService.GetUserByEmailAsync(email);
-        if (user == null)
-            return NotFound();
+        var user = await _identityService.GetUserByUsernameAsync(username, ct);
+        if (user == null) return NotFound();
         return Ok(user);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetAll(CancellationToken ct)
     {
-        var users = await _identityService.GetAllUsersAsync();
+        var users = await _identityService.GetAllUsersAsync(ct);
         return Ok(users);
     }
 
     [HttpGet("active")]
-    public async Task<IActionResult> GetActive()
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetActive(CancellationToken ct)
     {
-        var users = await _identityService.GetActiveUsersAsync();
+        var users = await _identityService.GetActiveUsersAsync(ct);
         return Ok(users);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] User user)
+    public async Task<IActionResult> Create([FromBody] CreateUserDto dto, CancellationToken ct)
     {
-        await _identityService.CreateUserAsync(user);
-        return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+        // รับค่าเป็น CreateUserDto (ที่มี Password)
+        // และให้ Service คืนค่ามาเป็น UserDto หรือ Guid ID
+        var userId = await _identityService.CreateUserAsync(dto, ct);
+
+        return CreatedAtAction(nameof(GetById), new { id = userId }, new { id = userId, dto.Username });
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] User user)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto, CancellationToken ct)
     {
-        if (id != user.Id)
-            return BadRequest();
+        var result = await _identityService.UpdateUserAsync(id, dto, ct);
+        if (!result) return NotFound();
 
-        await _identityService.UpdateUserAsync(user);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var user = await _identityService.GetUserByIdAsync(id);
-        if (user == null)
-            return NotFound();
+        // ปรับให้ส่งแค่ Guid ID เพื่อแก้ Error: cannot convert from UserDto to Guid
+        var result = await _identityService.DeleteUserAsync(id, ct);
+        if (!result) return NotFound();
 
-        await _identityService.DeleteUserAsync(user);
         return NoContent();
     }
 
     [HttpGet("exists/username/{username}")]
-    public async Task<IActionResult> ExistsByUsername(string username)
+    public async Task<IActionResult> ExistsByUsername(string username, CancellationToken ct)
     {
-        var exists = await _identityService.ExistsByUsernameAsync(username);
+        var exists = await _identityService.ExistsByUsernameAsync(username, ct);
         return Ok(new { exists });
     }
 
     [HttpGet("exists/email/{email}")]
-    public async Task<IActionResult> ExistsByEmail(string email)
+    public async Task<IActionResult> ExistsByEmail(string email, CancellationToken ct)
     {
-        var exists = await _identityService.ExistsByEmailAsync(email);
+        var exists = await _identityService.ExistsByEmailAsync(email, ct);
         return Ok(new { exists });
     }
 }

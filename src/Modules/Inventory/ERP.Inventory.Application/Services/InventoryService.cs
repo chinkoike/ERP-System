@@ -92,40 +92,26 @@ public class InventoryService : IInventoryService
 
         return true;
     }
-    public async Task<bool> UpdateProductStockAsync(UpdateProductStockDto dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateProductStockAsync(Guid id, UpdateProductStockDto dto, CancellationToken ct)
     {
-        var repo = _unitOfWork.Repository<Product>();
-        var product = await repo.GetByIdAsync(dto.ProductId, cancellationToken);
-
+        var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id, ct);
         if (product == null) return false;
 
-        int updatedStock = product.CurrentStock + dto.QuantityChange;
-
-        if (updatedStock < 0)
-        {
-            throw new InvalidOperationException("Stock quantity cannot be less than zero.");
-        }
-
-        product.CurrentStock = updatedStock;
-        product.LastModifiedAt = DateTime.UtcNow;
-
-        repo.Update(product);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
+        product.Stock += dto.QuantityChange;
+        await _unitOfWork.SaveChangesAsync(ct);
         return true;
     }
 
-    public async Task DeleteProductAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteProductAsync(Guid id, CancellationToken ct)
     {
         var repo = _unitOfWork.Repository<Product>();
-        var product = await repo.GetByIdAsync(id, cancellationToken);
-        if (product != null)
-        {
-            repo.Remove(product);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
-    }
+        var product = await repo.GetByIdAsync(id, ct);
+        if (product == null) return false;
 
+        repo.Remove(product);
+        await _unitOfWork.SaveChangesAsync(ct);
+        return true;
+    }
     // --- Category Operations ---
 
     public async Task<CategoryDto?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken = default)
