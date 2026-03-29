@@ -21,9 +21,9 @@ public interface IIdentityService
     Task<RoleDto?> GetRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<RoleDto?> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default);
     Task<IEnumerable<RoleDto>> GetAllRolesAsync(CancellationToken cancellationToken = default);
-    Task CreateRoleAsync(RoleDto roleDto, CancellationToken cancellationToken = default);
-    Task UpdateRoleAsync(RoleDto roleDto, CancellationToken cancellationToken = default);
-    Task DeleteRoleAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<RoleDto> CreateRoleAsync(CreateRoleDto dto, CancellationToken cancellationToken = default);
+    Task<bool> UpdateRoleAsync(Guid id, UpdateRoleDto dto, CancellationToken cancellationToken = default);
+    Task<bool> DeleteRoleAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByRoleNameAsync(string name, CancellationToken cancellationToken = default);
 
     // Specialized Logic

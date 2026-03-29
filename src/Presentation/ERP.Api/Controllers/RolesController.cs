@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Identity.Application.Services.Interfaces;
-using ERP.Identity.Domain;
+using ERP.Identity.Application.DTOs; // อย่าลืมใช้ DTOs
 
 namespace ERP.Api.Controllers;
 
@@ -16,62 +16,51 @@ public class RolesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<RoleDto>> GetById(Guid id, CancellationToken ct)
     {
-        var role = await _identityService.GetRoleByIdAsync(id);
-        if (role == null)
-            return NotFound();
-        return Ok(role);
-    }
-
-    [HttpGet("by-name/{name}")]
-    public async Task<IActionResult> GetByName(string name)
-    {
-        var role = await _identityService.GetRoleByNameAsync(name);
-        if (role == null)
-            return NotFound();
+        var role = await _identityService.GetRoleByIdAsync(id, ct);
+        if (role == null) return NotFound();
         return Ok(role);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<IEnumerable<RoleDto>>> GetAll(CancellationToken ct)
     {
-        var roles = await _identityService.GetAllRolesAsync();
+        var roles = await _identityService.GetAllRolesAsync(ct);
         return Ok(roles);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] Role role)
+    public async Task<IActionResult> Create([FromBody] CreateRoleDto dto, CancellationToken ct)
     {
-        await _identityService.CreateRoleAsync(role);
-        return CreatedAtAction(nameof(GetById), new { id = role.Id }, role);
+        var roleId = await _identityService.CreateRoleAsync(dto, ct);
+        return CreatedAtAction(nameof(GetById), new { id = roleId }, new { id = roleId });
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] Role role)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRoleDto dto, CancellationToken ct)
     {
-        if (id != role.Id)
-            return BadRequest();
+        // ใช้ Pattern Task<bool> เหมือนเดิม
+        var result = await _identityService.UpdateRoleAsync(id, dto, ct);
+        if (!result) return NotFound();
 
-        await _identityService.UpdateRoleAsync(role);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var role = await _identityService.GetRoleByIdAsync(id);
-        if (role == null)
-            return NotFound();
+        // ส่งแค่ Guid id ไปที่ Service
+        var result = await _identityService.DeleteRoleAsync(id, ct);
+        if (!result) return NotFound();
 
-        await _identityService.DeleteRoleAsync(role);
         return NoContent();
     }
 
     [HttpGet("exists/name/{name}")]
-    public async Task<IActionResult> ExistsByName(string name)
+    public async Task<IActionResult> ExistsByName(string name, CancellationToken ct)
     {
-        var exists = await _identityService.ExistsByRoleNameAsync(name);
+        var exists = await _identityService.ExistsByRoleNameAsync(name, ct);
         return Ok(new { exists });
     }
 }
