@@ -74,25 +74,24 @@ public class InventoryService : IInventoryService
         return MapToProductDto(product);
     }
 
-    public async Task UpdateProductAsync(ProductDto dto, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateProductAsync(Guid id, UpdateProductDto dto, CancellationToken ct = default)
     {
         var repo = _unitOfWork.Repository<Product>();
-        var product = await repo.GetByIdAsync(dto.Id, cancellationToken);
+        var product = await repo.GetByIdAsync(id, ct);
 
-        if (product != null)
-        {
-            product.Name = dto.Name;
-            product.Description = dto.Description;
-            product.BasePrice = dto.BasePrice;
-            product.CategoryId = dto.CategoryId;
-            product.LastModifiedAt = DateTime.UtcNow;
-            product.LastModifiedBy = dto.UpdatedBy;
+        if (product == null) return false;
 
-            repo.Update(product);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        product.Name = dto.Name;
+        product.Description = dto.Description;
+        product.Price = dto.Price;
+        product.CategoryId = dto.CategoryId;
+        product.LastModifiedAt = DateTime.UtcNow;
+
+        repo.Update(product);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return true;
     }
-
     public async Task<bool> UpdateProductStockAsync(UpdateProductStockDto dto, CancellationToken cancellationToken = default)
     {
         var repo = _unitOfWork.Repository<Product>();

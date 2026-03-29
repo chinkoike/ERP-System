@@ -16,12 +16,12 @@ public interface IInventoryService
     Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto, CancellationToken cancellationToken = default);
 
     // ใช้ ProductDto สำหรับการอัปเดตข้อมูลทั่วไป (ชื่อ, ราคา, รายละเอียด)
-    Task UpdateProductAsync(ProductDto productDto, CancellationToken cancellationToken = default);
+    Task<bool> UpdateProductAsync(Guid id, UpdateProductDto dto, CancellationToken cancellationToken = default);
 
     // ใช้ UpdateProductStockDto สำหรับการจัดการสต็อกโดยเฉพาะ (Stock In/Out)
-    Task<bool> UpdateProductStockAsync(UpdateProductStockDto updateStockDto, CancellationToken cancellationToken = default);
+    Task<bool> UpdateProductStockAsync(Guid id, UpdateProductStockDto updateStockDto, CancellationToken cancellationToken = default);
 
-    Task DeleteProductAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteProductAsync(Guid id, CancellationToken cancellationToken = default);
 
     // --- Category Read Operations ---
     Task<CategoryDto?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken = default);
