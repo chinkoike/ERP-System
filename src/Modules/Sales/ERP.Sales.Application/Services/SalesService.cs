@@ -3,8 +3,6 @@ using ERP.Shared;
 using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Domain;
 using ERP.Sales.Application.DTOs;
-using ERP.Identity.Domain;
-using ERP.Inventory.Domain;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Identity.Application.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -151,73 +149,45 @@ public class SalesService : ISalesService
     }
 
     // Order operations
-    public async Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken cancellationToken = default)
+    public async Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken ct = default)
     {
-        await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-        try
+        // 1. สร้าง Order Entity (ตาม Domain ของ Sales)
+        var order = new Order
         {
-            // 1. สร้างหัวบิล (Order Header)
-            var order = new Order
+            Id = Guid.NewGuid(),
+            CustomerId = dto.CustomerId,
+            OrderDate = DateTime.UtcNow,
+            OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4].ToUpper()}",
+            Status = OrderStatus.Pending.ToString(),
+            TotalAmount = dto.Items.Sum(x => x.UnitPrice * x.Quantity),
+            Items = dto.Items.Select(item => new OrderItem
             {
-                OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}",
-                CustomerId = dto.CustomerId,
-                OrderDate = DateTime.UtcNow,
-                Status = "Pending",
-                CreatedAt = DateTime.UtcNow,
-                CreatedBy = "System"
+                ProductId = item.ProductId,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice
+            }).ToList()
+        };
+
+        // 2. บันทึก Order ลงฐานข้อมูล Sales
+        await _unitOfWork.Repository<Order>().AddAsync(order, ct);
+
+        // 3. 🚨 จุดที่ต้องแก้ Error (เรียกใช้ Inventory Service)
+        foreach (var item in order.Items)
+        {
+            // สร้าง DTO สำหรับอัปเดตสต็อก (ติดลบเพราะเป็นการขายออก)
+            var updateStockDto = new UpdateProductStockDto
+            {
+                QuantityChange = -item.Quantity
             };
 
-            decimal totalAmount = 0;
-            var orderItems = new List<OrderItem>();
-
-            // 2. วนลูปจัดการรายการสินค้า
-            foreach (var itemDto in dto.Items)
-            {
-                // ดึงข้อมูลสินค้าเพื่อเช็คสต็อกและราคาล่าสุด
-                var product = await _inventoryService.GetProductByIdAsync(itemDto.ProductId, cancellationToken);
-                if (product == null) throw new Exception($"Product {itemDto.ProductId} not found");
-
-                // ตรวจสอบสต็อก (Business Logic)
-                if (product.StockQuantity < itemDto.Quantity)
-                    throw new Exception($"สินค้า {product.Name} มีสต็อกไม่พอ");
-
-                // สร้าง OrderItem
-                var orderItem = new OrderItem
-                {
-                    OrderId = order.Id,
-                    ProductId = itemDto.ProductId,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = product.BasePrice, // ใช้ราคาจริงจาก Inventory
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                orderItems.Add(orderItem);
-                totalAmount += orderItem.UnitPrice * orderItem.Quantity;
-
-                // 3. สั่งตัดสต็อกในโมดูล Inventory (Cross-module call)
-                // สมมติว่า InventoryService มีเมธอดอัปเดตสต็อก
-                await _inventoryService.UpdateProductStockAsync(new UpdateProductStockDto
-                {
-                    ProductId = itemDto.ProductId,
-                    QuantityChange = -itemDto.Quantity
-                }, cancellationToken);
-            }
-
-            order.TotalAmount = totalAmount;
-            order.Items = orderItems;
-
-            await _unitOfWork.Repository<Order>().AddAsync(order, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await _unitOfWork.CommitTransactionAsync(cancellationToken);
-
-            return order.Id;
+            // ✅ แก้ไขตาม Error: ต้องส่ง (Guid ProductId, DTO, Token)
+            await _inventoryService.UpdateProductStockAsync(item.ProductId, updateStockDto, ct);
         }
-        catch (Exception)
-        {
-            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
-            throw;
-        }
+
+        // 4. Commit ทั้งหมด (Unit of Work จะจัดการ Transaction ให้)
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return order.Id;
     }
     public async Task<Order?> GetOrderByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {

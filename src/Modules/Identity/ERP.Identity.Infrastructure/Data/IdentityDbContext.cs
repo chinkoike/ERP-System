@@ -49,7 +49,7 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : Db
                 Name = "Admin",
                 Description = "Administrator with full access",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(2026, 3, 30, 0, 0, 0, DateTimeKind.Utc),
                 CreatedBy = "System"
             },
             new Role
@@ -58,7 +58,7 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : Db
                 Name = "Manager",
                 Description = "Manager with operational access",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(2026, 3, 30, 0, 0, 0, DateTimeKind.Utc),
                 CreatedBy = "System"
             },
             new Role
@@ -67,7 +67,7 @@ public class IdentityDbContext(DbContextOptions<IdentityDbContext> options) : Db
                 Name = "User",
                 Description = "Regular user with limited access",
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = new DateTime(2026, 3, 30, 0, 0, 0, DateTimeKind.Utc),
                 CreatedBy = "System"
             }
         );

@@ -10,7 +10,7 @@ public class IdentityService : IIdentityService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
 
-    public IdentityService(IUnitOfWork unitOfWork, TokenService tokenService)
+    public IdentityService(IUnitOfWork unitOfWork, ITokenService tokenService)
     {
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;

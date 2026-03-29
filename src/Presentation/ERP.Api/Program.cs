@@ -81,6 +81,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<IdentityDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddDbContext<InventoryDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddDbContext<SalesDbContext>(opt => opt.UseSqlServer(connectionString));
+builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<IdentityDbContext>());
 
 // 4. Generic Repository & Unit of Work
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
