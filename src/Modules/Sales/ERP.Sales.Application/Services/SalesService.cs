@@ -7,6 +7,8 @@ using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Identity.Application.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ERP.Inventory.Application.DTOs;
+using ERP.Identity.Application.DTOs;
+using ERP.Shared.Exceptions;
 namespace ERP.Sales.Application.Services;
 
 public class SalesService : ISalesService
@@ -392,56 +394,67 @@ public class SalesService : ISalesService
             Status = order.Status // เพิ่ม Status เข้าไปด้วย
         };
     }
-    public async Task CreateOrderWithUserAsync(string username, string email, string password, string productSku, int quantity, CancellationToken cancellationToken = default)
+    public async Task CreateOrderWithUserAsync(RegisterRequest registerRequest, string productSku, int quantity, CancellationToken cancellationToken = default)
     {
-
-        await _identityService.RegisterAsync(username, email, password, cancellationToken);
+        // 1. ดึงข้อมูลสินค้ามาเช็คก่อนเริ่ม Transaction (ประหยัด Resource)
         var product = await _inventoryService.GetProductBySkuAsync(productSku, cancellationToken);
-        if (product == null) throw new Exception("ไม่พบสินค้าในระบบ");
+        if (product == null)
+            throw new NotFoundException($"ไม่พบสินค้า SKU: {productSku} ในระบบ");
 
+        // 2. เริ่ม Transaction (ควรคลุมทั้ง Register และ Create Order)
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
         try
         {
+            // 3. สมัครสมาชิก (ส่งก้อน Request เข้าไปเลย)
+            // Note: RegisterAsync ภายในควรใช้ _unitOfWork เดียวกันเพื่อให้ Rollback ได้ถ้า Order พัง
+            var userDto = await _identityService.RegisterAsync(registerRequest, cancellationToken);
+
+            // 4. สร้างข้อมูลลูกค้า (Customer) ใน Module Sales
             var customerRepository = _unitOfWork.Repository<Customer>();
             var newCustomer = new Customer
             {
-                FirstName = username,
-                LastName = "-",
-                Email = email,
+                FirstName = registerRequest.FirstName, // ใช้จาก DTO
+                LastName = registerRequest.LastName,   // ใช้จาก DTO
+                Email = registerRequest.Email,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = "System"
             };
             await customerRepository.AddAsync(newCustomer, cancellationToken);
 
+            // 5. สร้างใบสั่งซื้อ (Order)
             var orderRepository = _unitOfWork.Repository<Order>();
             var newOrder = new Order
             {
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}",
                 CustomerId = newCustomer.Id,
                 OrderDate = DateTime.UtcNow,
-                TotalAmount = product.BasePrice * quantity, // ใช้ราคาที่ดึงมาจาก Inventory Service
+                TotalAmount = product.BasePrice * quantity,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = "System"
+                CreatedBy = userDto.Username // ใช้ Username ที่เพิ่งสมัครสำเร็จ
             };
             await orderRepository.AddAsync(newOrder, cancellationToken);
 
+            // 6. เพิ่มรายการสินค้า (OrderItem)
             var orderItemRepository = _unitOfWork.Repository<OrderItem>();
             var newOrderItem = new OrderItem
             {
                 OrderId = newOrder.Id,
-                ProductId = product.Id, // ID จาก Inventory
+                ProductId = product.Id,
                 Quantity = quantity,
                 UnitPrice = product.BasePrice,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = "System"
+                CreatedBy = userDto.Username
             };
             await orderItemRepository.AddAsync(newOrderItem, cancellationToken);
 
+            // 7. บันทึกและ Commit ทีเดียว
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
         }
         catch (Exception)
         {
+            // ถ้าขั้นไหนพัง (เช่น Register ผ่านแต่สร้าง Order ไม่ได้) มันจะ Rollback ทั้งหมด!
             await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             throw;
         }

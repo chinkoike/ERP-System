@@ -21,6 +21,7 @@ public class UsersController : ControllerBase
         var user = await _identityService.GetUserByIdAsync(id, ct);
         if (user == null) return NotFound();
         return Ok(user);
+        throw new Exception("Test Middleware Success!");
     }
 
     [HttpGet("by-username/{username}")]
@@ -86,5 +87,15 @@ public class UsersController : ControllerBase
     {
         var exists = await _identityService.ExistsByEmailAsync(email, ct);
         return Ok(new { exists });
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult<UserDto>> Register([FromBody] RegisterRequest request, CancellationToken ct)
+    {
+        // เรียก Service ที่คุณเพิ่งเขียน
+        var user = await _identityService.RegisterAsync(request, ct);
+
+        // ถ้าสำเร็จจะคืนค่า 200 OK พร้อมข้อมูล User (ที่ไม่มี Password)
+        return Ok(user);
     }
 }

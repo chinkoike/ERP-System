@@ -3,6 +3,9 @@ using ERP.Shared;
 using ERP.Identity.Application.Services.Interfaces;
 using ERP.Identity.Domain;
 using ERP.Identity.Application.DTOs;
+using Microsoft.EntityFrameworkCore;
+using ERP.Shared.Exceptions;
+
 namespace ERP.Identity.Application.Services;
 
 public class IdentityService : IIdentityService
@@ -88,26 +91,31 @@ public class IdentityService : IIdentityService
         return users.Select(MapToUserDto);
     }
 
-    public async Task<UserDto> RegisterAsync(string username, string email, string password, CancellationToken cancellationToken = default)
+    public async Task<UserDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
         var userRepo = _unitOfWork.Repository<User>();
 
-        // 1. ตรวจสอบว่า Email หรือ Username ซ้ำไหม
-        var existingUsers = await userRepo.FindAsync(u => u.Email == email || u.Username == username, cancellationToken);
+        // 1. ตรวจสอบว่า Email หรือ Username ซ้ำไหม (เปลี่ยนมาใช้ request.xxx)
+        var existingUsers = await userRepo.FindAsync(u =>
+            u.Email == request.Email || u.Username == request.Username, cancellationToken);
+
         if (existingUsers.Any())
         {
-            // แนะนำให้ Throw Exception เพื่อให้ Global Exception Handler จัดการส่ง 400 Bad Request กลับไป
-            throw new InvalidOperationException("Username or Email already exists.");
+            // เปลี่ยนมาใช้ BadRequestException เพื่อให้ Middleware ส่ง Status 400 กลับไป
+            throw new BadRequestException("Username or Email already exists.");
         }
 
-        // 2. Hash รหัสผ่านด้วย BCrypt ก่อนบันทึก
-        string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-
+        // 2. เตรียมสร้าง User ใหม่
         var newUser = new User
         {
-            Username = username,
-            Email = email,
-            PasswordHash = passwordHash, // เก็บตัวที่ Hash แล้วเท่านั้น
+            Username = request.Username,
+            Email = request.Email,
+            // Hash Password จาก request
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            JobTitle = request.JobTitle,
+            Department = request.Department,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = "System"
@@ -115,28 +123,42 @@ public class IdentityService : IIdentityService
 
         await userRepo.AddAsync(newUser, cancellationToken);
 
-        // 3. (Optional) กำหนด Role เริ่มต้นให้ User
-        // สมมติว่าคุณมี Role ชื่อ "User" ในฐานข้อมูล
-        var roleRepo = _unitOfWork.Repository<Role>();
-        var defaultRoles = await roleRepo.FindAsync(r => r.Name == "User", cancellationToken);
-        var defaultRole = defaultRoles.FirstOrDefault();
+        // 3. กำหนด Role ให้ User
+        // วิธีที่ 1: ใช้ RoleId ที่ส่งมาจากหน้าบ้าน (request.RoleId)
+        // วิธีที่ 2: ถ้าไม่ได้ส่งมา ให้ดึงจาก DB ตามชื่อ "User" (แบบที่คุณทำ)
 
-        if (defaultRole != null)
+        var roleRepo = _unitOfWork.Repository<Role>();
+        var targetRoleId = request.RoleId; // ใช้ตัวที่ส่งมาจากหน้าบ้านเป็นหลัก
+
+        // ถ้าหน้าบ้านไม่ได้ส่ง RoleId มา (เป็น Guid.Empty) ให้หา Default Role
+        if (targetRoleId == Guid.Empty)
+        {
+            var defaultRoles = await roleRepo.FindAsync(r => r.Name == "User", cancellationToken);
+            var defaultRole = defaultRoles.FirstOrDefault();
+            if (defaultRole != null) targetRoleId = defaultRole.Id;
+        }
+
+        if (targetRoleId != Guid.Empty)
         {
             var userRole = new UserRole
             {
-                User = newUser,
-                RoleId = defaultRole.Id
+                User = newUser, // EF จะผูก UserId ให้เองอัตโนมัติ
+                RoleId = targetRoleId
             };
             await _unitOfWork.Repository<UserRole>().AddAsync(userRole, cancellationToken);
         }
 
-        // 4. บันทึกข้อมูลทั้งหมดลง Database (Unit of Work)
+        // 4. บันทึกข้อมูลทั้งหมด (Unit of Work)
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return MapToUserDto(newUser);
-    }
+        // 5. โหลดข้อมูลกลับมาพร้อม Role (เพื่อให้ JSON ไม่ว่าง)
+        var resultUser = await userRepo.GetQueryable()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == newUser.Id, cancellationToken);
 
+        return MapToUserDto(resultUser ?? newUser);
+    }
     public async Task<Guid> CreateUserAsync(CreateUserDto dto, CancellationToken ct)
     {
         var user = new User
@@ -374,6 +396,11 @@ public class IdentityService : IIdentityService
         Username = u.Username,
         Email = u.Email,
         IsActive = u.IsActive,
+        Roles = u.UserRoles?
+    .Select(ur => ur.Role?.Name)
+    .Where(name => name != null)
+    .Cast<string>()
+    .ToList() ?? new List<string>(),
         CreatedAt = u.CreatedAt,
         CreatedBy = u.CreatedBy ?? "System",
         UpdatedAt = u.LastModifiedAt,

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Application.DTOs;
 using ERP.Sales.Application.DTOs.Requests;
+using ERP.Identity.Application.DTOs;
 namespace ERP.Api.Controllers;
 
 [ApiController]
@@ -74,11 +75,19 @@ public class OrdersController : ControllerBase
     {
         try
         {
-            // แก้ไข parameter ให้ตรงกับ Service (username, email, password, sku, qty)
+            var registerReq = new RegisterRequest
+            {
+                Username = request.Username,
+                Email = request.Email,
+                Password = request.Password,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                RoleId = request.RoleId
+            };
+
+            // เรียกใช้งานใหม่ด้วย 3-4 arguments ตามที่ Interface กำหนด
             await _salesService.CreateOrderWithUserAsync(
-                request.Username,
-                request.Email,
-                request.Password, // เปลี่ยนจาก pawword เป็น Password
+                registerReq,
                 request.ProductSku,
                 request.Quantity,
                 ct);

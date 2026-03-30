@@ -1,0 +1,31 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace ERP.Identity.Application.DTOs;
+
+public class RegisterRequest
+{
+    [Required(ErrorMessage = "กรุณากรอก Username")]
+    [StringLength(50, MinimumLength = 3)]
+    public string Username { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "กรุณากรอก Email")]
+    [EmailAddress(ErrorMessage = "รูปแบบ Email ไม่ถูกต้อง")]
+    public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "กรุณากรอก Password")]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร")]
+    public string Password { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "กรุณาระบุชื่อจริง")]
+    public string FirstName { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "กรุณาระบุนามสกุล")]
+    public string LastName { get; set; } = string.Empty;
+
+    // เพิ่มฟิลด์เสริมสำหรับ ERP (Optional)
+    public string? JobTitle { get; set; }
+    public string? Department { get; set; }
+
+    [Required(ErrorMessage = "กรุณาระบุสิทธิ์การใช้งาน (Role)")]
+    public Guid RoleId { get; set; }
+}

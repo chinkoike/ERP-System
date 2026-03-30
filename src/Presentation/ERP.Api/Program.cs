@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
-// --- Using เดิมของคุณ ---
 using ERP.Identity.Infrastructure.Data;
 using ERP.Inventory.Infrastructure.Data;
 using ERP.Sales.Infrastructure.Data;
@@ -22,6 +21,7 @@ using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Infrastructure.Repositories;
 using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
+using ERP.Shared.Infrastructure.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,6 +106,7 @@ builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ISalesService, SalesService>();
 
 var app = builder.Build();
+app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

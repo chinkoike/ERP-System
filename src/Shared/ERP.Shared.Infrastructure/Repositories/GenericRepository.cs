@@ -16,6 +16,10 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     }
 
     public IQueryable<T> Query() => _dbSet.AsNoTracking();
+    public IQueryable<T> GetQueryable()
+    {
+        return _dbSet.AsQueryable();
+    }
 
     public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
@@ -55,4 +59,5 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         if (predicate == null) throw new ArgumentNullException(nameof(predicate));
         return await _dbSet.AnyAsync(predicate, cancellationToken);
     }
+
 }

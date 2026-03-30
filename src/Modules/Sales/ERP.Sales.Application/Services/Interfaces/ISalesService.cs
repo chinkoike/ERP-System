@@ -1,5 +1,5 @@
 using ERP.Sales.Application.DTOs;
-using ERP.Sales.Domain;
+using ERP.Identity.Application.DTOs;
 namespace ERP.Sales.Application.Services.Interfaces;
 
 public interface ISalesService
@@ -15,12 +15,10 @@ public interface ISalesService
     // === Order Core Logic (หัวใจของระบบ) ===
 
     Task CreateOrderWithUserAsync(
-        string username,
-        string email,
-        string password, // ตรวจสอบว่าใน Service ใช้ชื่อ password หรือ pawword
-        string productSku,
-        int quantity,
-        CancellationToken cancellationToken = default);
+         RegisterRequest registerRequest,
+         string productSku,
+         int quantity,
+         CancellationToken cancellationToken = default);
     Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken ct = default);
 
     // การเปลี่ยนสถานะบิล (เช่น จาก Pending -> Paid -> Shipped)
