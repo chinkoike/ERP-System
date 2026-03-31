@@ -16,6 +16,10 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     }
 
     public IQueryable<T> Query() => _dbSet.AsNoTracking();
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default)
+    {
+        return await _dbSet.AnyAsync(predicate, ct);
+    }
     public IQueryable<T> GetQueryable()
     {
         return _dbSet.AsQueryable();

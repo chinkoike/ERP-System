@@ -21,11 +21,6 @@ public class RegisterRequest
 
     [Required(ErrorMessage = "กรุณาระบุนามสกุล")]
     public string LastName { get; set; } = string.Empty;
-
-    // เพิ่มฟิลด์เสริมสำหรับ ERP (Optional)
-    public string? JobTitle { get; set; }
-    public string? Department { get; set; }
-
-    [Required(ErrorMessage = "กรุณาระบุสิทธิ์การใช้งาน (Role)")]
+    [Required(ErrorMessage = "กรุณาระบุสิทธิ์การใช้งาน")]
     public Guid RoleId { get; set; }
 }

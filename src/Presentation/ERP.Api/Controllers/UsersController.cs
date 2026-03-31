@@ -98,4 +98,14 @@ public class UsersController : ControllerBase
         // ถ้าสำเร็จจะคืนค่า 200 OK พร้อมข้อมูล User (ที่ไม่มี Password)
         return Ok(user);
     }
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request, CancellationToken ct)
+    {
+        // เรียก Service เพื่อตรวจสอบ User และสร้าง Token
+        var response = await _identityService.LoginAsync(request, ct);
+
+        if (response == null) return Unauthorized(new { message = "Username หรือ Password ไม่ถูกต้อง" });
+
+        return Ok(response);
+    }
 }

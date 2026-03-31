@@ -114,8 +114,6 @@ public class IdentityService : IIdentityService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             FirstName = request.FirstName,
             LastName = request.LastName,
-            JobTitle = request.JobTitle,
-            Department = request.Department,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = "System"
@@ -161,21 +159,49 @@ public class IdentityService : IIdentityService
     }
     public async Task<Guid> CreateUserAsync(CreateUserDto dto, CancellationToken ct)
     {
-        var user = new User
+        // 1. ตรวจสอบข้อมูลซ้ำ
+        var exists = await _unitOfWork.Repository<User>().AnyAsync(u =>
+            u.Username == dto.Username || u.Email == dto.Email, ct);
+
+        if (exists)
+        {
+            throw new BadRequestException("Username or Email already exists.");
+        }
+
+        // 2. สร้าง User ใหม่
+        var newUser = new User
         {
             Id = Guid.NewGuid(),
             Username = dto.Username,
             Email = dto.Email,
-            // PasswordHash = dto.Password // อย่าลืมทำ Password Hashing นะครับ!
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            JobTitle = dto.JobTitle,
+            Department = dto.Department,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "Admin" // ระบุว่าสร้างโดย Admin
         };
 
-        await _unitOfWork.Repository<User>().AddAsync(user, ct);
-        await _unitOfWork.SaveChangesAsync(ct);
-        return user.Id;
-    }
+        await _unitOfWork.Repository<User>().AddAsync(newUser, ct);
 
+        // 3. จัดการเรื่อง Role (ตรวจสอบ dto.RoleId)
+        if (dto.RoleId.HasValue)
+        {
+            var userRole = new UserRole
+            {
+                Id = Guid.NewGuid(),
+                UserId = newUser.Id,
+                RoleId = dto.RoleId.Value,
+                AssignedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.Repository<UserRole>().AddAsync(userRole, ct);
+        }
+
+        await _unitOfWork.SaveChangesAsync(ct);
+        return newUser.Id;
+    }
     public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto dto, CancellationToken ct)
     {
         var repo = _unitOfWork.Repository<User>();
