@@ -5,7 +5,8 @@ using ERP.Identity.Domain;
 using ERP.Identity.Application.DTOs;
 using Microsoft.EntityFrameworkCore;
 using ERP.Shared.Exceptions;
-
+using System.Security.Claims;
+using ERP.Identity.Application.Exceptions;
 namespace ERP.Identity.Application.Services;
 
 public class IdentityService : IIdentityService
@@ -24,38 +25,105 @@ public class IdentityService : IIdentityService
     {
         var repo = _unitOfWork.Repository<User>();
 
+        // 1. ค้นหา User
         var users = await repo.FindAsync(u => u.Username == loginRequest.Username, cancellationToken);
         var user = users.FirstOrDefault();
 
+        // 2. ตรวจสอบ User และสถานะ Active
         if (user == null || !user.IsActive)
         {
             return new AuthResponseDto { IsSuccess = false, Message = "Invalid username or password." };
         }
 
-
+        // 3. ตรวจสอบ Password ด้วย BCrypt
         bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash);
-
         if (!isPasswordValid)
         {
             return new AuthResponseDto { IsSuccess = false, Message = "Invalid username or password." };
         }
 
+        // 4. ดึงข้อมูล Roles
         var userRoles = await _unitOfWork.Repository<UserRole>()
             .FindAsync(ur => ur.UserId == user.Id, cancellationToken);
 
         var roleIds = userRoles.Select(ur => ur.RoleId).ToList();
         var roles = await _unitOfWork.Repository<Role>()
             .FindAsync(r => roleIds.Contains(r.Id), cancellationToken);
+
         var rolesList = roles.Select(r => r.Name).ToList();
-        var token = _tokenService.GenerateToken(MapToUserDto(user), rolesList);
+
+        // 5. สร้าง Access Token และ Refresh Token
+        var userDto = MapToUserDto(user);
+        var accessToken = _tokenService.GenerateToken(userDto, rolesList);
+        var refreshToken = _tokenService.GenerateRefreshToken(); // เรียกใช้ตัวที่เราเพิ่มใหม่ใน TokenService
+
+        // 6. อัปเดต Refresh Token ลงใน User Entity (Database)
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // ตั้งอายุไว้ 7 วัน (หรือตาม JwtSettings)
+
+        await repo.UpdateAsync(user, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // 7. ส่งข้อมูลกลับ
         return new AuthResponseDto
         {
             IsSuccess = true,
             Message = "Login successful",
-            User = MapToUserDto(user),
-            Roles = roles.Select(r => r.Name).ToList(),
-            Token = token
+            User = userDto,
+            Roles = rolesList,
+            Token = accessToken,
+            RefreshToken = refreshToken // อย่าลืมส่งตัวนี้กลับไปให้หน้าบ้านเก็บไว้ด้วย
         };
+    }
+    public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request, CancellationToken ct)
+    {
+        // 1. แกะข้อมูลจาก Token ที่หมดอายุ (Expired Access Token)
+        var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
+        var username = principal.Identity?.Name;
+
+        var users = await _unitOfWork.Repository<User>()
+              .FindAsync(u => u.Username == username, ct);
+        var user = users.FirstOrDefault();
+
+        // 3. ตรวจสอบว่า Refresh Token ใน DB ตรงกับที่ส่งมาไหม และยังไม่หมดอายุใช่ไหม
+        if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
+            throw new UnauthorizedException("Invalid refresh token attempt");
+        }
+
+        // 4. สร้าง Token ชุดใหม่ (Rotation)
+        var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        var newAccessToken = _tokenService.GenerateToken(MapToUserDto(user), roles);
+        var newRefreshToken = _tokenService.GenerateRefreshToken();
+
+        // 5. บันทึก Refresh Token ใหม่ลง DB
+        user.RefreshToken = newRefreshToken;
+        await _unitOfWork.Repository<User>().UpdateAsync(user, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new AuthResponseDto
+        {
+            IsSuccess = true,
+            Token = newAccessToken,
+            RefreshToken = newRefreshToken
+        };
+    }
+
+    public async Task<bool> LogoutAsync(LogoutRequestDto request, CancellationToken ct)
+    {
+        var users = await _unitOfWork.Repository<User>()
+            .FindAsync(u => u.RefreshToken == request.RefreshToken, ct);
+
+        var user = users.FirstOrDefault();
+
+        if (user == null) return false;
+
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+
+        await _unitOfWork.Repository<User>().UpdateAsync(user, ct);
+
+        return await _unitOfWork.SaveChangesAsync(ct) > 0;
     }
     // --- User Operations ---
 

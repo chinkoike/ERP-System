@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using ERP.Identity.Application.DTOs;
 using ERP.Identity.Application.Services.Interfaces;
-
+using System.Security.Cryptography; // สำหรับสร้าง Refresh Token
 namespace ERP.Identity.Application.Services;
 
 public class TokenService : ITokenService
@@ -15,6 +15,40 @@ public class TokenService : ITokenService
     public TokenService(IConfiguration config)
     {
         _config = config;
+    }
+    public string GenerateRefreshToken()
+    {
+        var randomNumber = new byte[32];
+        using var rng = RandomNumberGenerator.Create();
+        rng.GetBytes(randomNumber);
+        return Convert.ToBase64String(randomNumber);
+    }
+
+    // 2. เพิ่ม Method สำหรับแกะข้อมูลจาก Token ที่หมดอายุแล้ว
+    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+    {
+        var jwtSettings = _config.GetSection("JwtSettings");
+        var secretKey = jwtSettings["Secret"] ?? "YourFallbackVerySecretKeyAtLeast32Chars";
+
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            ValidateLifetime = false // *** สำคัญมาก: ต้องเป็น false เพื่อให้แกะ Token ที่หมดอายุแล้วได้
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+
+        if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+        {
+            throw new SecurityTokenException("Invalid token");
+        }
+
+        return principal;
     }
 
     public string GenerateToken(UserDto user, List<string> roles)

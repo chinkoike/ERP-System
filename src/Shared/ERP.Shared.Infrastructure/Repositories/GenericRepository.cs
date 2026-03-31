@@ -51,13 +51,24 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         if (entity == null) throw new ArgumentNullException(nameof(entity));
         _dbSet.Update(entity);
     }
+    public Task UpdateAsync(T entity, CancellationToken ct)
+    {
+        if (entity == null) throw new ArgumentNullException(nameof(entity));
+        _dbContext.Entry(entity).State = EntityState.Modified;
+        return Task.CompletedTask;
+    }
 
     public void Remove(T entity)
     {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
         _dbSet.Remove(entity);
     }
-
+    public Task RemoveAsync(T entity, CancellationToken ct = default)
+    {
+        if (entity == null) throw new ArgumentNullException(nameof(entity));
+        _dbSet.Remove(entity);
+        return Task.CompletedTask;
+    }
     public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
         if (predicate == null) throw new ArgumentNullException(nameof(predicate));

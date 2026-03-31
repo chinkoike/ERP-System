@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Identity.Application.Services.Interfaces;
 using ERP.Identity.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ERP.Api.Controllers;
 
@@ -108,4 +109,28 @@ public class UsersController : ControllerBase
 
         return Ok(response);
     }
+    [AllowAnonymous]
+    [HttpPost("refresh-token")]
+    public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenRequestDto request, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _identityService.RefreshTokenAsync(request, ct);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequestDto request, CancellationToken ct)
+    {
+        var result = await _identityService.LogoutAsync(request, ct);
+        if (!result) return BadRequest(new { message = "Invalid logout request." });
+        return Ok(new { message = "Logged out successfully" });
+    }
+
+
 }

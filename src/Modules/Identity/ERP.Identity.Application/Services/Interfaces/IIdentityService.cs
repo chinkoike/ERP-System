@@ -27,7 +27,8 @@ public interface IIdentityService
     Task<bool> ExistsByRoleNameAsync(string name, CancellationToken cancellationToken = default);
 
     // Specialized Logic
-    // ใน IIdentityService.cs
+    Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request, CancellationToken ct);
+    Task<bool> LogoutAsync(LogoutRequestDto request, CancellationToken ct);
     Task<UserDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
     // UserRole Operations
     Task<UserRoleDto?> GetUserRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);
