@@ -3,13 +3,18 @@ using ERP.Inventory.Domain;
 
 namespace ERP.Inventory.Infrastructure.Data;
 
-public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : DbContext(options)
+public class InventoryDbContext : DbContext
 {
-    public DbSet<Product> Products => Set<Product>();
-    public DbSet<Category> Categories => Set<Category>();
+    public InventoryDbContext(DbContextOptions<InventoryDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<Category> Categories { get; set; }
+
+    public DbSet<Product> Products { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Product>().Property(p => p.BasePrice).HasPrecision(18, 2);
+        base.OnModelCreating(modelBuilder);
     }
 }

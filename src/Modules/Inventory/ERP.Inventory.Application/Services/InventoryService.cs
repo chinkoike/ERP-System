@@ -62,6 +62,7 @@ public class InventoryService : IInventoryService
             ImageUrl = dto.ImageUrl,
             Description = dto.Description,
             BasePrice = dto.BasePrice,
+            Price = dto.BasePrice,
             CurrentStock = dto.InitialStock,
             CategoryId = dto.CategoryId,
             CreatedAt = DateTime.UtcNow,
@@ -97,7 +98,7 @@ public class InventoryService : IInventoryService
         var product = await _unitOfWork.Repository<Product>().GetByIdAsync(id, ct);
         if (product == null) return false;
 
-        product.Stock += dto.QuantityChange;
+        product.CurrentStock += dto.QuantityChange;
         await _unitOfWork.SaveChangesAsync(ct);
         return true;
     }

@@ -83,28 +83,53 @@ builder.Services.AddDbContext<InventoryDbContext>(opt => opt.UseSqlServer(connec
 builder.Services.AddDbContext<SalesDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<IdentityDbContext>());
 
-// 4. Generic Repository & Unit of Work
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// --- 4. Repositories (ลงทะเบียนแบบระบุ Context) ---
 
-// 5. Repositories (Identity, Inventory, Sales)
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+// Identity
+builder.Services.AddScoped<IUserRepository>(sp => new UserRepository(sp.GetRequiredService<IdentityDbContext>()));
+builder.Services.AddScoped<IRoleRepository>(sp => new RoleRepository(sp.GetRequiredService<IdentityDbContext>()));
+builder.Services.AddScoped<IUserRoleRepository>(sp => new UserRoleRepository(sp.GetRequiredService<IdentityDbContext>()));
 
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+// Inventory
+builder.Services.AddScoped<IProductRepository>(sp => new ProductRepository(sp.GetRequiredService<InventoryDbContext>()));
+builder.Services.AddScoped<ICategoryRepository>(sp => new CategoryRepository(sp.GetRequiredService<InventoryDbContext>()));
 
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+// Sales
+builder.Services.AddScoped<ICustomerRepository>(sp => new CustomerRepository(sp.GetRequiredService<SalesDbContext>()));
+builder.Services.AddScoped<IOrderRepository>(sp => new OrderRepository(sp.GetRequiredService<SalesDbContext>()));
+builder.Services.AddScoped<IOrderItemRepository>(sp => new OrderItemRepository(sp.GetRequiredService<SalesDbContext>()));
 
-// 6. Service Registrations
+// --- 5. Service Registrations & Unit of Work Integration ---
+// เราจะฉีด UnitOfWork ที่ถือ Context ของแต่ละ Module เข้าไปใน Service นั้นๆ โดยตรง
+
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IIdentityService, IdentityService>();
-builder.Services.AddScoped<IInventoryService, InventoryService>();
-builder.Services.AddScoped<ISalesService, SalesService>();
 
+builder.Services.AddScoped<IIdentityService>(sp =>
+{
+    var context = sp.GetRequiredService<IdentityDbContext>();
+    var uow = new UnitOfWork(context); // สร้าง UoW สำหรับ Identity
+    var tokenService = sp.GetRequiredService<ITokenService>();
+    var userRepo = sp.GetRequiredService<IUserRepository>();
+    return new IdentityService(uow, tokenService);
+});
+
+builder.Services.AddScoped<IInventoryService>(sp =>
+{
+    var context = sp.GetRequiredService<InventoryDbContext>();
+    var uow = new UnitOfWork(context); // สร้าง UoW สำหรับ Inventory
+    return new InventoryService(uow);
+});
+
+builder.Services.AddScoped<ISalesService>(sp =>
+{
+    var context = sp.GetRequiredService<SalesDbContext>();
+    var uow = new UnitOfWork(context);
+    var identityService = sp.GetRequiredService<IIdentityService>();
+    var inventoryService = sp.GetRequiredService<IInventoryService>();
+    return new SalesService(uow, identityService, inventoryService);
+});
+
+// --- 6. Pipeline configuration ---
 var app = builder.Build();
 app.UseMiddleware<ExceptionMiddleware>();
 
@@ -115,10 +140,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// 7. สำคัญ: Authentication ต้องอยู่ก่อน Authorization
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.Run();

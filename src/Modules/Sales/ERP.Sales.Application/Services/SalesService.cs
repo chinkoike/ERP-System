@@ -264,7 +264,7 @@ public class SalesService : ISalesService
         foreach (var item in dto.Items)
         {
             var product = await _inventoryService.GetProductByIdAsync(item.ProductId, ct);
-            if (product == null || product.StockQuantity < item.Quantity)
+            if (product == null || product.CurrentStock < item.Quantity)
                 return false;
         }
         return true;
