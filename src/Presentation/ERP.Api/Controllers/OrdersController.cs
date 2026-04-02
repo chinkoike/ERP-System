@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Sales.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using ERP.Sales.Application.DTOs;
 using ERP.Sales.Application.DTOs.Requests;
 using ERP.Identity.Application.DTOs;
+using ERP.Sales.Domain;
 namespace ERP.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class OrdersController : ControllerBase
@@ -19,7 +22,6 @@ public class OrdersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<OrderSummaryDto>> GetById(Guid id, CancellationToken ct)
     {
-        // แนะนำให้ใช้ GetOrderSummary แทนการส่ง Entity Order ออกไปตรงๆ
         var order = await _salesService.GetOrderSummaryAsync(id, ct);
         if (order == null) return NotFound();
         return Ok(order);
@@ -56,13 +58,28 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
-    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] string newStatus, CancellationToken ct)
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] OrderStatus newStatus, CancellationToken ct)
     {
         var result = await _salesService.UpdateOrderStatusAsync(id, newStatus, ct);
         if (!result) return NotFound();
         return NoContent();
     }
 
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _salesService.CancelOrderAsync(id, ct);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+    [Authorize(Roles = "Admin")]
     [HttpGet("total-sales")]
     public async Task<IActionResult> GetTotalSales([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, CancellationToken ct)
     {
@@ -101,4 +118,3 @@ public class OrdersController : ControllerBase
     }
 }
 
-// ปรับปรุง Request DTO ให้รองรับ Password

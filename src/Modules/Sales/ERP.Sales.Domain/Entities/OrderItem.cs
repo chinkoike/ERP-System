@@ -9,5 +9,6 @@ public class OrderItem : BaseEntity
     public Guid ProductId { get; set; } // ID จาก Module Inventory
     public int Quantity { get; set; }
     public decimal SubTotal => Quantity * UnitPrice;
+    public decimal TotalPrice { get; set; }
     public decimal UnitPrice { get; set; }
 }

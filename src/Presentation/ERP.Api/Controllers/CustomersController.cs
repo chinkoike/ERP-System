@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Application.DTOs;
-
+using ERP.Sales.Domain;
 namespace ERP.Api.Controllers;
 
 [ApiController]
@@ -33,7 +33,9 @@ public class CustomersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCustomerDto dto, CancellationToken ct)
     {
+
         // Validation: ต้องมีทั้งชื่อและ Email (ตามที่เราแก้ใน Entity)
+
         if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest("First Name and Email are required.");
 

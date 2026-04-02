@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using ERP.Inventory.Application.DTOs;
 using ERP.Identity.Application.DTOs;
 using ERP.Shared.Exceptions;
+using ERP.Inventory.Domain;
 namespace ERP.Sales.Application.Services;
 
 public class SalesService : ISalesService
@@ -96,6 +97,14 @@ public class SalesService : ISalesService
     }
     public async Task<Guid> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken cancellationToken = default)
     {
+        var repo = _unitOfWork.Repository<Customer>();
+
+        // เช็ค Email ซ้ำที่นี่! (Business Logic)
+        var isExist = await repo.AnyAsync(c => c.Email != null && c.Email.ToLower() == dto.Email.ToLower(), cancellationToken);
+        if (isExist)
+        {
+            throw new Exception("Email นี้ถูกใช้งานไปแล้ว");
+        }
         var customer = new Customer
         {
             FirstName = dto.FirstName,
@@ -153,40 +162,72 @@ public class SalesService : ISalesService
     // Order operations
     public async Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken ct = default)
     {
-        // 1. สร้าง Order Entity (ตาม Domain ของ Sales)
+        // 1. เตรียมข้อมูลพื้นฐานของ Order
+        var orderId = Guid.NewGuid();
         var order = new Order
         {
-            Id = Guid.NewGuid(),
+            Id = orderId,
             CustomerId = dto.CustomerId,
             OrderDate = DateTime.UtcNow,
-            OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..4].ToUpper()}",
-            Status = OrderStatus.Pending.ToString(),
-            TotalAmount = dto.Items.Sum(x => x.UnitPrice * x.Quantity),
-            Items = dto.Items.Select(item => new OrderItem
-            {
-                ProductId = item.ProductId,
-                Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice
-            }).ToList()
+            OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{orderId.ToString()[..4].ToUpper()}",
+            Status = OrderStatus.Pending,
+            ShippingAddress = dto.ShippingAddress,
+            Items = new List<OrderItem>(),
+            TotalAmount = 0 // จะคำนวณใน Loop ด้านล่าง
         };
 
-        // 2. บันทึก Order ลงฐานข้อมูล Sales
-        await _unitOfWork.Repository<Order>().AddAsync(order, ct);
+        decimal totalOrderAmount = 0;
 
-        // 3. 🚨 จุดที่ต้องแก้ Error (เรียกใช้ Inventory Service)
-        foreach (var item in order.Items)
+        // 2. วนลูปเพื่อดึงราคาและเตรียมข้อมูล Item
+        foreach (var itemDto in dto.Items)
         {
-            // สร้าง DTO สำหรับอัปเดตสต็อก (ติดลบเพราะเป็นการขายออก)
+            // ดึงข้อมูลสินค้าจาก Inventory (เพื่อเอา Price ล่าสุดมาใช้)
+            var productDto = await _inventoryService.GetProductByIdAsync(itemDto.ProductId, ct);
+
+            if (productDto == null)
+                throw new Exception($"ไม่พบสินค้าไอดี: {itemDto.ProductId}");
+
+            // หากใน inventory ให้ราคาหลัก (Price) เป็น 0 ก็ใช้ BasePrice เป็น fallback
+            var unitPrice = productDto.Price > 0 ? productDto.Price : productDto.BasePrice;
+
+            if (unitPrice <= 0)
+                throw new Exception($"ราคาสินค้าไม่ถูกต้อง (ProductId={itemDto.ProductId}, Price={productDto.Price}, BasePrice={productDto.BasePrice})");
+
+            // คำนวณราคา ณ วันที่ขาย (Snapshot Price)
+            var itemTotal = unitPrice * itemDto.Quantity;
+
+            order.Items.Add(new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                OrderId = orderId,
+                ProductId = itemDto.ProductId,
+                Quantity = itemDto.Quantity,
+                UnitPrice = unitPrice, // ใช้ราคาจาก Database เท่านั้น
+                TotalPrice = itemTotal
+            });
+
+            totalOrderAmount += itemTotal;
+
+            // 3. ตัดสต็อกผ่าน Inventory Service
             var updateStockDto = new UpdateProductStockDto
             {
-                QuantityChange = -item.Quantity
+                QuantityChange = -itemDto.Quantity
             };
-
-            // ✅ แก้ไขตาม Error: ต้องส่ง (Guid ProductId, DTO, Token)
-            await _inventoryService.UpdateProductStockAsync(item.ProductId, updateStockDto, ct);
+            await _inventoryService.UpdateProductStockAsync(itemDto.ProductId, updateStockDto, ct);
         }
 
-        // 4. Commit ทั้งหมด (Unit of Work จะจัดการ Transaction ให้)
+        // 4. บันทึกราคาสุทธิที่คำนวณได้
+        order.TotalAmount = totalOrderAmount;
+
+        if (totalOrderAmount <= 0)
+        {
+            throw new Exception("คำนวณ TotalAmount แล้วได้ 0 หรือค่าติดลบ (ตรวจสอบราคาสินค้าใน Inventory)");
+        }
+
+        // 5. บันทึก Order (OrderItems อยู่ใน relation แล้ว)
+        await _unitOfWork.Repository<Order>().AddAsync(order, ct);
+
+        // 6. Commit Transaction ทั้งหมด
         await _unitOfWork.SaveChangesAsync(ct);
 
         return order.Id;
@@ -219,7 +260,7 @@ public class SalesService : ISalesService
             OrderNumber = o.OrderNumber,
             OrderDate = o.OrderDate,
             TotalAmount = o.TotalAmount,
-            Status = o.Status
+            Status = o.Status.ToString()
         });
     }
 
@@ -248,7 +289,7 @@ public class SalesService : ISalesService
         orderRepository.Update(order);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
-    public async Task<bool> UpdateOrderStatusAsync(Guid orderId, string newStatus, CancellationToken ct = default)
+    public async Task<bool> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus, CancellationToken ct = default)
     {
         var repo = _unitOfWork.Repository<Order>();
         var order = await repo.GetByIdAsync(orderId, ct);
@@ -259,6 +300,46 @@ public class SalesService : ISalesService
         await _unitOfWork.SaveChangesAsync(ct);
         return true;
     }
+
+    public async Task<bool> CancelOrderAsync(Guid orderId, CancellationToken ct = default)
+    {
+        var orderRepo = _unitOfWork.Repository<Order>();
+        var order = await orderRepo.GetByIdAsync(orderId, ct);
+        if (order == null)
+            return false;
+
+        if (order.Status == OrderStatus.Cancelled)
+            return true;
+
+        var orderItems = await _unitOfWork.Repository<OrderItem>().FindAsync(oi => oi.OrderId == orderId, ct);
+
+        // คืน stock ทุก item ไปยัง inventory
+        foreach (var item in orderItems)
+        {
+            var inventoryProduct = await _inventoryService.GetProductByIdAsync(item.ProductId, ct);
+            if (inventoryProduct == null)
+            {
+                throw new Exception($"ไม่พบสินค้าใน inventory (ProductId = {item.ProductId}) เพื่อคืนสต็อก");
+            }
+
+            var restockDto = new UpdateProductStockDto
+            {
+                QuantityChange = item.Quantity
+            };
+            var updated = await _inventoryService.UpdateProductStockAsync(item.ProductId, restockDto, ct);
+            if (!updated)
+            {
+                throw new Exception($"คืนสต็อกสินค้าไม่สำเร็จ (ProductId = {item.ProductId})");
+            }
+        }
+
+        order.Status = OrderStatus.Cancelled;
+        orderRepo.Update(order);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return true;
+    }
+
     public async Task<bool> ValidateStockAvailabilityAsync(CreateOrderDto dto, CancellationToken ct = default)
     {
         foreach (var item in dto.Items)
@@ -280,13 +361,13 @@ public class SalesService : ISalesService
                          OrderId = o.Id,
                          OrderNumber = o.OrderNumber,
                          TotalAmount = o.TotalAmount,
-                         Status = o.Status
+                         Status = o.Status.ToString()
                      });
     }
 
     public async Task<int> GetPendingOrdersCountAsync(CancellationToken ct = default)
     {
-        var orders = await _unitOfWork.Repository<Order>().FindAsync(o => o.Status == "Pending", ct);
+        var orders = await _unitOfWork.Repository<Order>().FindAsync(o => o.Status.ToString() == "Pending", ct);
         return orders.Count();
     }
     public async Task DeleteOrderAsync(Order order, CancellationToken cancellationToken = default)
@@ -391,7 +472,7 @@ public class SalesService : ISalesService
             OrderDate = order.OrderDate,
             TotalAmount = order.TotalAmount,
             ItemCount = items.Count(),
-            Status = order.Status // เพิ่ม Status เข้าไปด้วย
+            Status = order.Status.ToString() // เพิ่ม Status เข้าไปด้วย
         };
     }
     public async Task CreateOrderWithUserAsync(RegisterRequest registerRequest, string productSku, int quantity, CancellationToken cancellationToken = default)
@@ -429,24 +510,30 @@ public class SalesService : ISalesService
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8]}",
                 CustomerId = newCustomer.Id,
                 OrderDate = DateTime.UtcNow,
-                TotalAmount = product.BasePrice * quantity,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = userDto.Username // ใช้ Username ที่เพิ่งสมัครสำเร็จ
             };
             await orderRepository.AddAsync(newOrder, cancellationToken);
 
             // 6. เพิ่มรายการสินค้า (OrderItem)
+            var unitPrice = product.Price > 0 ? product.Price : product.BasePrice;
+
             var orderItemRepository = _unitOfWork.Repository<OrderItem>();
             var newOrderItem = new OrderItem
             {
                 OrderId = newOrder.Id,
                 ProductId = product.Id,
                 Quantity = quantity,
-                UnitPrice = product.BasePrice,
+                UnitPrice = unitPrice,
+                TotalPrice = unitPrice * quantity,
                 CreatedAt = DateTime.UtcNow,
                 CreatedBy = userDto.Username
             };
             await orderItemRepository.AddAsync(newOrderItem, cancellationToken);
+
+            // 7. ปรับ total order ให้ตรงกับ order item (กรณีมีหลายรายการในอนาคต)
+            newOrder.TotalAmount = newOrderItem.TotalPrice;
+            orderRepository.Update(newOrder);
 
             // 7. บันทึกและ Commit ทีเดียว
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -1,5 +1,6 @@
 using ERP.Sales.Application.DTOs;
 using ERP.Identity.Application.DTOs;
+using ERP.Sales.Domain;
 namespace ERP.Sales.Application.Services.Interfaces;
 
 public interface ISalesService
@@ -22,7 +23,9 @@ public interface ISalesService
     Task<Guid> PlaceOrderAsync(CreateOrderDto dto, CancellationToken ct = default);
 
     // การเปลี่ยนสถานะบิล (เช่น จาก Pending -> Paid -> Shipped)
-    Task<bool> UpdateOrderStatusAsync(Guid orderId, string newStatus, CancellationToken ct = default);
+    Task<bool> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus, CancellationToken ct = default);
+
+    Task<bool> CancelOrderAsync(Guid orderId, CancellationToken ct = default);
 
     // ตรวจสอบสต็อกก่อนสร้าง Order (เรียกใช้ข้ามไปที่ Inventory Module)
     Task<bool> ValidateStockAvailabilityAsync(CreateOrderDto dto, CancellationToken ct = default);

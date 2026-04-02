@@ -8,5 +8,6 @@ public class OrderSummaryDto
     public DateTime OrderDate { get; set; }
     public decimal TotalAmount { get; set; }
     public int ItemCount { get; set; }
+    public Guid CustomerId { get; set; }
     public string Status { get; set; } = "Pending";
 }
