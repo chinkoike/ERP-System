@@ -19,6 +19,11 @@ using ERP.Sales.Application.Repositories;
 using ERP.Sales.Application.Services;
 using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Infrastructure.Repositories;
+using ERP.Purchasing.Application.Repositories;
+using ERP.Purchasing.Application.Services;
+using ERP.Purchasing.Application.Services.Interfaces;
+using ERP.Purchasing.Infrastructure.Data;
+using ERP.Purchasing.Infrastructure.Repositories;
 using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using ERP.Shared.Infrastructure.Middleware;
@@ -81,6 +86,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<IdentityDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddDbContext<InventoryDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddDbContext<SalesDbContext>(opt => opt.UseSqlServer(connectionString));
+builder.Services.AddDbContext<PurchasingDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<IdentityDbContext>());
 
 // --- 4. Repositories (ลงทะเบียนแบบระบุ Context) ---
@@ -99,6 +105,10 @@ builder.Services.AddScoped<ICustomerRepository>(sp => new CustomerRepository(sp.
 builder.Services.AddScoped<IOrderRepository>(sp => new OrderRepository(sp.GetRequiredService<SalesDbContext>()));
 builder.Services.AddScoped<IOrderItemRepository>(sp => new OrderItemRepository(sp.GetRequiredService<SalesDbContext>()));
 
+// Purchasing
+builder.Services.AddScoped<ISupplierRepository>(sp => new SupplierRepository(sp.GetRequiredService<PurchasingDbContext>()));
+builder.Services.AddScoped<IPurchaseOrderRepository>(sp => new PurchaseOrderRepository(sp.GetRequiredService<PurchasingDbContext>()));
+
 // --- 5. Service Registrations & Unit of Work Integration ---
 // เราจะฉีด UnitOfWork ที่ถือ Context ของแต่ละ Module เข้าไปใน Service นั้นๆ โดยตรง
 
@@ -110,14 +120,18 @@ builder.Services.AddScoped<IIdentityService>(sp =>
     var uow = new UnitOfWork(context); // สร้าง UoW สำหรับ Identity
     var tokenService = sp.GetRequiredService<ITokenService>();
     var userRepo = sp.GetRequiredService<IUserRepository>();
-    return new IdentityService(uow, tokenService);
+    var roleRepo = sp.GetRequiredService<IRoleRepository>();
+    var userRoleRepo = sp.GetRequiredService<IUserRoleRepository>();
+    return new IdentityService(uow, tokenService, userRepo, roleRepo, userRoleRepo);
 });
 
 builder.Services.AddScoped<IInventoryService>(sp =>
 {
     var context = sp.GetRequiredService<InventoryDbContext>();
     var uow = new UnitOfWork(context); // สร้าง UoW สำหรับ Inventory
-    return new InventoryService(uow);
+    var productRepo = sp.GetRequiredService<IProductRepository>();
+    var categoryRepo = sp.GetRequiredService<ICategoryRepository>();
+    return new InventoryService(uow, productRepo, categoryRepo);
 });
 
 builder.Services.AddScoped<ISalesService>(sp =>
@@ -126,7 +140,20 @@ builder.Services.AddScoped<ISalesService>(sp =>
     var uow = new UnitOfWork(context);
     var identityService = sp.GetRequiredService<IIdentityService>();
     var inventoryService = sp.GetRequiredService<IInventoryService>();
-    return new SalesService(uow, identityService, inventoryService);
+    var customerRepo = sp.GetRequiredService<ICustomerRepository>();
+    var orderRepo = sp.GetRequiredService<IOrderRepository>();
+    var orderItemRepo = sp.GetRequiredService<IOrderItemRepository>();
+    return new SalesService(uow, identityService, inventoryService, customerRepo, orderRepo, orderItemRepo);
+});
+
+builder.Services.AddScoped<IPurchasingService>(sp =>
+{
+    var context = sp.GetRequiredService<PurchasingDbContext>();
+    var uow = new UnitOfWork(context);
+    var inventoryService = sp.GetRequiredService<IInventoryService>();
+    var supplierRepo = sp.GetRequiredService<ISupplierRepository>();
+    var purchaseOrderRepo = sp.GetRequiredService<IPurchaseOrderRepository>();
+    return new PurchasingService(uow, inventoryService, supplierRepo, purchaseOrderRepo);
 });
 
 // --- 6. Pipeline configuration ---

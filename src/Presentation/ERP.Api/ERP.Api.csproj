@@ -25,6 +25,9 @@
     <ProjectReference Include="..\..\Modules\Sales\ERP.Sales.Application\ERP.Sales.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Sales\ERP.Sales.Domain\ERP.Sales.Domain.csproj" />
     <ProjectReference Include="..\..\Modules\Sales\ERP.Sales.Infrastructure\ERP.Sales.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Purchasing\ERP.Purchasing.Application\ERP.Purchasing.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Purchasing\ERP.Purchasing.Domain\ERP.Purchasing.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Purchasing\ERP.Purchasing.Infrastructure\ERP.Purchasing.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
     <ProjectReference Include="..\..\Shared\ERP.Shared.Infrastructure\ERP.Shared.Infrastructure.csproj" />
   </ItemGroup>

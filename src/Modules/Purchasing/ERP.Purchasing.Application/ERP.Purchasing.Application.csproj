@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Inventory\ERP.Inventory.Application\ERP.Inventory.Application.csproj" />
+    <ProjectReference Include="..\..\Purchasing\ERP.Purchasing.Domain\ERP.Purchasing.Domain.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

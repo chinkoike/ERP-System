@@ -6,13 +6,13 @@ namespace ERP.Shared.Infrastructure.Repositories;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : class
 {
-    private readonly DbContext _dbContext;
+    protected readonly DbContext DbContext;
     private readonly DbSet<T> _dbSet;
 
     public GenericRepository(DbContext dbContext)
     {
-        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _dbSet = _dbContext.Set<T>();
+        DbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _dbSet = DbContext.Set<T>();
     }
 
     public IQueryable<T> Query() => _dbSet.AsNoTracking();
@@ -54,7 +54,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     public Task UpdateAsync(T entity, CancellationToken ct)
     {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
-        _dbContext.Entry(entity).State = EntityState.Modified;
+        DbContext.Entry(entity).State = EntityState.Modified;
         return Task.CompletedTask;
     }
 

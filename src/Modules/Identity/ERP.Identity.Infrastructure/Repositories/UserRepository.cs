@@ -49,4 +49,13 @@ public class UserRepository : GenericRepository<User>, IUserRepository
 
         return await ExistsAsync(u => u.Email == email, cancellationToken);
     }
+
+    public async Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            throw new ArgumentException("Refresh token cannot be null or empty", nameof(refreshToken));
+
+        var users = await FindAsync(u => u.RefreshToken == refreshToken, cancellationToken);
+        return users.FirstOrDefault();
+    }
 }

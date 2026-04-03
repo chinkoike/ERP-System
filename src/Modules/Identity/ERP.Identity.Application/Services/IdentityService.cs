@@ -1,6 +1,7 @@
 using BCrypt.Net;
 using ERP.Shared;
 using ERP.Identity.Application.Services.Interfaces;
+using ERP.Identity.Application.Repositories;
 using ERP.Identity.Domain;
 using ERP.Identity.Application.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -13,21 +14,34 @@ public class IdentityService : IIdentityService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITokenService _tokenService;
+    private readonly IUserRepository _userRepository;
+    private readonly IRoleRepository _roleRepository;
+    private readonly IUserRoleRepository _userRoleRepository;
 
-    public IdentityService(IUnitOfWork unitOfWork, ITokenService tokenService)
+    public IdentityService(
+        IUnitOfWork unitOfWork,
+        ITokenService tokenService,
+        IUserRepository userRepository,
+        IRoleRepository roleRepository,
+        IUserRoleRepository userRoleRepository)
     {
         _unitOfWork = unitOfWork;
         _tokenService = tokenService;
+        _userRepository = userRepository;
+        _roleRepository = roleRepository;
+        _userRoleRepository = userRoleRepository;
     }
 
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest, CancellationToken cancellationToken = default)
     {
-        var repo = _unitOfWork.Repository<User>();
-
         // 1. ค้นหา User
-        var users = await repo.FindAsync(u => u.Username == loginRequest.Username, cancellationToken);
-        var user = users.FirstOrDefault();
+        var user = await _userRepository.GetByUsernameAsync(loginRequest.Username, cancellationToken);
+
+        if (user == null || !user.IsActive)
+        {
+            return new AuthResponseDto { IsSuccess = false, Message = "Invalid username or password." };
+        }
 
         // 2. ตรวจสอบ User และสถานะ Active
         if (user == null || !user.IsActive)
@@ -43,12 +57,10 @@ public class IdentityService : IIdentityService
         }
 
         // 4. ดึงข้อมูล Roles
-        var userRoles = await _unitOfWork.Repository<UserRole>()
-            .FindAsync(ur => ur.UserId == user.Id, cancellationToken);
+        var userRoles = await _userRoleRepository.FindAsync(ur => ur.UserId == user.Id, cancellationToken);
 
         var roleIds = userRoles.Select(ur => ur.RoleId).ToList();
-        var roles = await _unitOfWork.Repository<Role>()
-            .FindAsync(r => roleIds.Contains(r.Id), cancellationToken);
+        var roles = await _roleRepository.FindAsync(r => roleIds.Contains(r.Id), cancellationToken);
 
         var rolesList = roles.Select(r => r.Name).ToList();
 
@@ -61,7 +73,7 @@ public class IdentityService : IIdentityService
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // ตั้งอายุไว้ 7 วัน (หรือตาม JwtSettings)
 
-        await repo.UpdateAsync(user, cancellationToken);
+        await _userRepository.UpdateAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 7. ส่งข้อมูลกลับ
@@ -81,9 +93,7 @@ public class IdentityService : IIdentityService
         var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
         var username = principal.Identity?.Name;
 
-        var users = await _unitOfWork.Repository<User>()
-              .FindAsync(u => u.Username == username, ct);
-        var user = users.FirstOrDefault();
+        var user = await _userRepository.GetByUsernameAsync(username ?? string.Empty, ct);
 
         // 3. ตรวจสอบว่า Refresh Token ใน DB ตรงกับที่ส่งมาไหม และยังไม่หมดอายุใช่ไหม
         if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
@@ -98,7 +108,7 @@ public class IdentityService : IIdentityService
 
         // 5. บันทึก Refresh Token ใหม่ลง DB
         user.RefreshToken = newRefreshToken;
-        await _unitOfWork.Repository<User>().UpdateAsync(user, ct);
+        await _userRepository.UpdateAsync(user, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         return new AuthResponseDto
@@ -111,17 +121,14 @@ public class IdentityService : IIdentityService
 
     public async Task<bool> LogoutAsync(LogoutRequestDto request, CancellationToken ct)
     {
-        var users = await _unitOfWork.Repository<User>()
-            .FindAsync(u => u.RefreshToken == request.RefreshToken, ct);
-
-        var user = users.FirstOrDefault();
+        var user = await _userRepository.GetByRefreshTokenAsync(request.RefreshToken, ct);
 
         if (user == null) return false;
 
         user.RefreshToken = null;
         user.RefreshTokenExpiryTime = null;
 
-        await _unitOfWork.Repository<User>().UpdateAsync(user, ct);
+        await _userRepository.UpdateAsync(user, ct);
 
         return await _unitOfWork.SaveChangesAsync(ct) > 0;
     }
@@ -129,42 +136,40 @@ public class IdentityService : IIdentityService
 
     public async Task<UserDto?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var user = await _unitOfWork.Repository<User>().GetByIdAsync(id, cancellationToken);
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
         return user == null ? null : MapToUserDto(user);
     }
 
     public async Task<UserDto?> GetUserByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
-        var users = await _unitOfWork.Repository<User>().FindAsync(u => u.Username == username, cancellationToken);
-        var user = users.FirstOrDefault();
+        var user = await _userRepository.GetByUsernameAsync(username, cancellationToken);
         return user == null ? null : MapToUserDto(user);
     }
 
     public async Task<UserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        var users = await _unitOfWork.Repository<User>().FindAsync(u => u.Email == email, cancellationToken);
-        var user = users.FirstOrDefault();
+        var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
         return user == null ? null : MapToUserDto(user);
     }
 
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _unitOfWork.Repository<User>().GetAllAsync(cancellationToken);
+        var users = await _userRepository.GetAllAsync(cancellationToken);
         return users.Select(MapToUserDto);
     }
 
     public async Task<IEnumerable<UserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _unitOfWork.Repository<User>().FindAsync(u => u.IsActive, cancellationToken);
+        var users = await _userRepository.GetActiveUsersAsync(cancellationToken);
         return users.Select(MapToUserDto);
     }
 
     public async Task<UserDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
-        var userRepo = _unitOfWork.Repository<User>();
+        var userRepo = _userRepository;
 
-        // 1. ตรวจสอบว่า Email หรือ Username ซ้ำไหม (เปลี่ยนมาใช้ request.xxx)
-        var existingUsers = await userRepo.FindAsync(u =>
+        // 1. ตรวจสอบว่า Email หรือ Username ซ้ำไหม
+        var existingUsers = await _userRepository.FindAsync(u =>
             u.Email == request.Email || u.Username == request.Username, cancellationToken);
 
         if (existingUsers.Any())
@@ -193,13 +198,12 @@ public class IdentityService : IIdentityService
         // วิธีที่ 1: ใช้ RoleId ที่ส่งมาจากหน้าบ้าน (request.RoleId)
         // วิธีที่ 2: ถ้าไม่ได้ส่งมา ให้ดึงจาก DB ตามชื่อ "User" (แบบที่คุณทำ)
 
-        var roleRepo = _unitOfWork.Repository<Role>();
         var targetRoleId = request.RoleId; // ใช้ตัวที่ส่งมาจากหน้าบ้านเป็นหลัก
 
         // ถ้าหน้าบ้านไม่ได้ส่ง RoleId มา (เป็น Guid.Empty) ให้หา Default Role
         if (targetRoleId == Guid.Empty)
         {
-            var defaultRoles = await roleRepo.FindAsync(r => r.Name == "User", cancellationToken);
+            var defaultRoles = await _roleRepository.FindAsync(r => r.Name == "User", cancellationToken);
             var defaultRole = defaultRoles.FirstOrDefault();
             if (defaultRole != null) targetRoleId = defaultRole.Id;
         }
@@ -208,16 +212,14 @@ public class IdentityService : IIdentityService
         {
             var userRole = new UserRole
             {
-                User = newUser, // EF จะผูก UserId ให้เองอัตโนมัติ
+                User = newUser,
                 RoleId = targetRoleId
             };
-            await _unitOfWork.Repository<UserRole>().AddAsync(userRole, cancellationToken);
+            await _userRoleRepository.AddAsync(userRole, cancellationToken);
         }
 
-        // 4. บันทึกข้อมูลทั้งหมด (Unit of Work)
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 5. โหลดข้อมูลกลับมาพร้อม Role (เพื่อให้ JSON ไม่ว่าง)
         var resultUser = await userRepo.GetQueryable()
             .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
@@ -228,7 +230,7 @@ public class IdentityService : IIdentityService
     public async Task<Guid> CreateUserAsync(CreateUserDto dto, CancellationToken ct)
     {
         // 1. ตรวจสอบข้อมูลซ้ำ
-        var exists = await _unitOfWork.Repository<User>().AnyAsync(u =>
+        var exists = await _userRepository.AnyAsync(u =>
             u.Username == dto.Username || u.Email == dto.Email, ct);
 
         if (exists)
@@ -252,7 +254,7 @@ public class IdentityService : IIdentityService
             CreatedBy = "Admin" // ระบุว่าสร้างโดย Admin
         };
 
-        await _unitOfWork.Repository<User>().AddAsync(newUser, ct);
+        await _userRepository.AddAsync(newUser, ct);
 
         // 3. จัดการเรื่อง Role (ตรวจสอบ dto.RoleId)
         if (dto.RoleId.HasValue)
@@ -264,7 +266,7 @@ public class IdentityService : IIdentityService
                 RoleId = dto.RoleId.Value,
                 AssignedAt = DateTime.UtcNow
             };
-            await _unitOfWork.Repository<UserRole>().AddAsync(userRole, ct);
+            await _userRoleRepository.AddAsync(userRole, ct);
         }
 
         await _unitOfWork.SaveChangesAsync(ct);
@@ -272,8 +274,7 @@ public class IdentityService : IIdentityService
     }
     public async Task<bool> UpdateUserAsync(Guid id, UpdateUserDto dto, CancellationToken ct)
     {
-        var repo = _unitOfWork.Repository<User>();
-        var user = await repo.GetByIdAsync(id, ct);
+        var user = await _userRepository.GetByIdAsync(id, ct);
 
         if (user == null) return false;
 
@@ -283,54 +284,51 @@ public class IdentityService : IIdentityService
         user.LastName = dto.LastName;
 
 
-        repo.Update(user);
+        _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(ct);
 
         return true;
     }
     public async Task<bool> DeleteUserAsync(Guid id, CancellationToken ct)
     {
-        var repo = _unitOfWork.Repository<User>();
-        var user = await repo.GetByIdAsync(id, ct);
+        var user = await _userRepository.GetByIdAsync(id, ct);
         if (user == null) return false;
 
-        repo.Remove(user); // หรือ .Delete() ตามที่ Repository คุณมี
+        _userRepository.Remove(user);
         await _unitOfWork.SaveChangesAsync(ct);
         return true;
     }
 
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
-        return await _unitOfWork.Repository<User>().ExistsAsync(u => u.Username == username, cancellationToken);
+        return await _userRepository.ExistsByUsernameAsync(username, cancellationToken);
     }
 
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await _unitOfWork.Repository<User>().ExistsAsync(u => u.Email == email, cancellationToken);
+        return await _userRepository.ExistsByEmailAsync(email, cancellationToken);
     }
 
     // --- Role Operations ---
 
     public async Task<RoleDto?> GetRoleByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var role = await _unitOfWork.Repository<Role>().GetByIdAsync(id, cancellationToken);
+        var role = await _roleRepository.GetByIdAsync(id, cancellationToken);
         return role == null ? null : MapToRoleDto(role);
     }
 
     public async Task<RoleDto?> GetRoleByNameAsync(string name, CancellationToken cancellationToken = default)
     {
-        var roles = await _unitOfWork.Repository<Role>().FindAsync(r => r.Name == name, cancellationToken);
-        var role = roles.FirstOrDefault();
+        var role = await _roleRepository.GetByNameAsync(name, cancellationToken);
         return role == null ? null : MapToRoleDto(role);
     }
 
     public async Task<IEnumerable<RoleDto>> GetAllRolesAsync(CancellationToken cancellationToken = default)
     {
-        var roles = await _unitOfWork.Repository<Role>().GetAllAsync(cancellationToken);
+        var roles = await _roleRepository.GetAllAsync(cancellationToken);
         return roles.Select(MapToRoleDto);
     }
 
-    // 1. เปลี่ยน Return Type จาก Task<Guid> เป็น Task<RoleDto> ให้ตรงกับ Interface
     public async Task<RoleDto> CreateRoleAsync(CreateRoleDto dto, CancellationToken ct)
     {
         // 2. สร้าง Entity จาก DTO
@@ -343,7 +341,7 @@ public class IdentityService : IIdentityService
         };
 
         // 3. บันทึกลงฐานข้อมูล
-        await _unitOfWork.Repository<Role>().AddAsync(role, ct);
+        await _roleRepository.AddAsync(role, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         // 4. สร้าง RoleDto เพื่อส่งกลับไป (ต้อง Return เป็น RoleDto ตามที่ Interface สั่ง)
@@ -358,57 +356,55 @@ public class IdentityService : IIdentityService
 
     public async Task<bool> UpdateRoleAsync(Guid id, UpdateRoleDto dto, CancellationToken ct)
     {
-        var repo = _unitOfWork.Repository<Role>();
-        var role = await repo.GetByIdAsync(id, ct);
+        var role = await _roleRepository.GetByIdAsync(id, ct);
         if (role == null) return false;
 
         role.Name = dto.Name;
         role.Description = dto.Description;
 
-        repo.Update(role);
+        _roleRepository.Update(role);
         await _unitOfWork.SaveChangesAsync(ct);
         return true;
     }
 
     public async Task<bool> DeleteRoleAsync(Guid id, CancellationToken ct)
     {
-        var repo = _unitOfWork.Repository<Role>();
-        var role = await repo.GetByIdAsync(id, ct);
+        var role = await _roleRepository.GetByIdAsync(id, ct);
         if (role == null) return false;
 
-        repo.Remove(role); // หรือ .Delete()
+        _roleRepository.Remove(role); // หรือ .Delete()
         await _unitOfWork.SaveChangesAsync(ct);
         return true;
     }
 
     public async Task<bool> ExistsByRoleNameAsync(string name, CancellationToken cancellationToken = default)
     {
-        return await _unitOfWork.Repository<Role>().ExistsAsync(r => r.Name == name, cancellationToken);
+        return await _roleRepository.ExistsByNameAsync(name, cancellationToken);
     }
 
     // --- UserRole Operations ---
 
     public async Task<UserRoleDto?> GetUserRoleByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var userRole = await _unitOfWork.Repository<UserRole>().GetByIdAsync(id, cancellationToken);
+        var userRole = await _userRoleRepository.GetByIdAsync(id, cancellationToken);
         return userRole == null ? null : MapToUserRoleDto(userRole);
     }
 
     public async Task<IEnumerable<UserRoleDto>> GetUserRolesByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var userRoles = await _unitOfWork.Repository<UserRole>().FindAsync(ur => ur.UserId == userId, cancellationToken);
+        var userRoles = await _userRoleRepository.GetUserRolesAsync(userId, cancellationToken);
         return userRoles.Select(MapToUserRoleDto);
     }
 
     public async Task<IEnumerable<UserRoleDto>> GetUserRolesByRoleIdAsync(Guid roleId, CancellationToken cancellationToken = default)
     {
-        var userRoles = await _unitOfWork.Repository<UserRole>().FindAsync(ur => ur.RoleId == roleId, cancellationToken);
+        var userRoles = await _userRoleRepository.GetRoleUsersAsync(roleId, cancellationToken);
         return userRoles.Select(MapToUserRoleDto);
     }
 
     public async Task<IEnumerable<UserRoleDto>> GetAllUserRolesAsync(CancellationToken cancellationToken = default)
     {
-        var userRoles = await _unitOfWork.Repository<UserRole>().GetAllAsync(cancellationToken);
+        var userRoles = await _userRoleRepository.GetAllAsync(cancellationToken);
         return userRoles.Select(MapToUserRoleDto);
     }
 
@@ -421,14 +417,13 @@ public class IdentityService : IIdentityService
             CreatedAt = DateTime.UtcNow,
             CreatedBy = dto.CreatedBy ?? "System"
         };
-        await _unitOfWork.Repository<UserRole>().AddAsync(userRole, cancellationToken);
+        await _userRoleRepository.AddAsync(userRole, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateUserRoleAsync(UserRoleDto dto, CancellationToken cancellationToken = default)
     {
-        var repo = _unitOfWork.Repository<UserRole>();
-        var userRole = await repo.GetByIdAsync(dto.Id, cancellationToken);
+        var userRole = await _userRoleRepository.GetByIdAsync(dto.Id, cancellationToken);
         if (userRole != null)
         {
             userRole.UserId = dto.UserId;
@@ -436,50 +431,36 @@ public class IdentityService : IIdentityService
             userRole.LastModifiedAt = DateTime.UtcNow;
             userRole.LastModifiedBy = dto.UpdatedBy ?? "System";
 
-            repo.Update(userRole);
+            _userRoleRepository.Update(userRole);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 
     public async Task DeleteUserRoleAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var repo = _unitOfWork.Repository<UserRole>();
-        var userRole = await repo.GetByIdAsync(id, cancellationToken);
+        var userRole = await _userRoleRepository.GetByIdAsync(id, cancellationToken);
         if (userRole != null)
         {
-            repo.Remove(userRole);
+            _userRoleRepository.Remove(userRole);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 
     public async Task AssignRoleToUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default)
     {
-        var userRole = new UserRole
-        {
-            UserId = userId,
-            RoleId = roleId,
-            CreatedAt = DateTime.UtcNow,
-            CreatedBy = "System"
-        };
-        await _unitOfWork.Repository<UserRole>().AddAsync(userRole, cancellationToken);
+        await _userRoleRepository.AssignRoleToUserAsync(userId, roleId, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task RemoveRoleFromUserAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default)
     {
-        var repo = _unitOfWork.Repository<UserRole>();
-        var userRoles = await repo.FindAsync(ur => ur.UserId == userId && ur.RoleId == roleId, cancellationToken);
-        var userRole = userRoles.FirstOrDefault();
-        if (userRole != null)
-        {
-            repo.Remove(userRole);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+        await _userRoleRepository.RemoveRoleFromUserAsync(userId, roleId, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsByUserAndRoleAsync(Guid userId, Guid roleId, CancellationToken cancellationToken = default)
     {
-        return await _unitOfWork.Repository<UserRole>().ExistsAsync(ur => ur.UserId == userId && ur.RoleId == roleId, cancellationToken);
+        return await _userRoleRepository.UserHasRoleAsync(userId, roleId, cancellationToken);
     }
 
     // --- Private Helper Mappers ---
