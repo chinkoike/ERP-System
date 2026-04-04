@@ -2,6 +2,7 @@ namespace ERP.Purchasing.Application.DTOs;
 
 public class PurchaseOrderDto
 {
+
     public Guid Id { get; set; }
     public string PurchaseOrderNumber { get; set; } = null!;
     public Guid SupplierId { get; set; }
