@@ -29,6 +29,8 @@ using ERP.Finance.Application.Services;
 using ERP.Finance.Application.Services.Interfaces;
 using ERP.Finance.Infrastructure.Data;
 using ERP.Finance.Infrastructure.Repositories;
+using ERP.Report.Application.Services;
+using ERP.Report.Application.Services.Interfaces;
 using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using ERP.Shared.Infrastructure.Middleware;
@@ -176,6 +178,19 @@ builder.Services.AddScoped<IFinanceService>(sp =>
     var accountRepo = sp.GetRequiredService<IAccountRepository>();
     var supplierRepo = sp.GetRequiredService<ISupplierRepository>();
     return new FinanceService(uow, invoiceRepo, paymentRepo, accountRepo, supplierRepo);
+});
+
+builder.Services.AddScoped<IReportService>(sp =>
+{
+    var orderRepo = sp.GetRequiredService<IOrderRepository>();
+    var orderItemRepo = sp.GetRequiredService<IOrderItemRepository>();
+    var customerRepo = sp.GetRequiredService<ICustomerRepository>();
+    var productRepo = sp.GetRequiredService<IProductRepository>();
+    var categoryRepo = sp.GetRequiredService<ICategoryRepository>();
+    var invoiceRepo = sp.GetRequiredService<IInvoiceRepository>();
+    var paymentRepo = sp.GetRequiredService<IPaymentRepository>();
+    var accountRepo = sp.GetRequiredService<IAccountRepository>();
+    return new ReportService(orderRepo, orderItemRepo, customerRepo, productRepo, categoryRepo, invoiceRepo, paymentRepo, accountRepo);
 });
 
 // --- 6. Pipeline configuration ---

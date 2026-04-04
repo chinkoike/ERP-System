@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ERP.Report.Domain\ERP.Report.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Sales\ERP.Sales.Application\ERP.Sales.Application.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Inventory\ERP.Inventory.Application\ERP.Inventory.Application.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Finance\ERP.Finance.Application\ERP.Finance.Application.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Sales\ERP.Sales.Domain\ERP.Sales.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Inventory\ERP.Inventory.Domain\ERP.Inventory.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Modules\Finance\ERP.Finance.Domain\ERP.Finance.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

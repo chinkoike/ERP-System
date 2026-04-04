@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Application.DTOs;
 using ERP.Sales.Domain;
+using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CustomersController : ControllerBase

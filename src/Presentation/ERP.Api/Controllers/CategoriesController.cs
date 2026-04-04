@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Inventory.Application.DTOs;
+using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CategoriesController : ControllerBase

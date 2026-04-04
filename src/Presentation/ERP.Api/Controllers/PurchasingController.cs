@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Purchasing.Application.Services.Interfaces;
 using ERP.Purchasing.Application.DTOs;
-
+using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class PurchasingController : ControllerBase

@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Identity.Application.Services.Interfaces;
 using ERP.Identity.Application.DTOs; // อย่าลืมใช้ DTOs
-
+using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class RolesController : ControllerBase

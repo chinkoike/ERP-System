@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ERP.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
@@ -33,6 +34,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetAll(CancellationToken ct)
     {
@@ -66,6 +68,7 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
@@ -90,6 +93,7 @@ public class UsersController : ControllerBase
         return Ok(new { exists });
     }
 
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<ActionResult<UserDto>> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
@@ -99,6 +103,7 @@ public class UsersController : ControllerBase
         // ถ้าสำเร็จจะคืนค่า 200 OK พร้อมข้อมูล User (ที่ไม่มี Password)
         return Ok(user);
     }
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request, CancellationToken ct)
     {
