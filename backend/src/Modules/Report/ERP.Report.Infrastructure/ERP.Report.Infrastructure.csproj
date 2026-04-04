@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ERP.Report.Domain\ERP.Report.Domain.csproj" />
+    <ProjectReference Include="..\ERP.Report.Domain\ERP.Report.Domain.csproj" />
     <ProjectReference Include="..\..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
   </ItemGroup>
 
