@@ -24,6 +24,11 @@ using ERP.Purchasing.Application.Services;
 using ERP.Purchasing.Application.Services.Interfaces;
 using ERP.Purchasing.Infrastructure.Data;
 using ERP.Purchasing.Infrastructure.Repositories;
+using ERP.Finance.Application.Repositories;
+using ERP.Finance.Application.Services;
+using ERP.Finance.Application.Services.Interfaces;
+using ERP.Finance.Infrastructure.Data;
+using ERP.Finance.Infrastructure.Repositories;
 using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using ERP.Shared.Infrastructure.Middleware;
@@ -87,6 +92,7 @@ builder.Services.AddDbContext<IdentityDbContext>(opt => opt.UseSqlServer(connect
 builder.Services.AddDbContext<InventoryDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddDbContext<SalesDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddDbContext<PurchasingDbContext>(opt => opt.UseSqlServer(connectionString));
+builder.Services.AddDbContext<FinanceDbContext>(opt => opt.UseSqlServer(connectionString));
 builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<IdentityDbContext>());
 
 // --- 4. Repositories (ลงทะเบียนแบบระบุ Context) ---
@@ -108,6 +114,11 @@ builder.Services.AddScoped<IOrderItemRepository>(sp => new OrderItemRepository(s
 // Purchasing
 builder.Services.AddScoped<ISupplierRepository>(sp => new SupplierRepository(sp.GetRequiredService<PurchasingDbContext>()));
 builder.Services.AddScoped<IPurchaseOrderRepository>(sp => new PurchaseOrderRepository(sp.GetRequiredService<PurchasingDbContext>()));
+
+// Finance
+builder.Services.AddScoped<IInvoiceRepository>(sp => new InvoiceRepository(sp.GetRequiredService<FinanceDbContext>()));
+builder.Services.AddScoped<IPaymentRepository>(sp => new PaymentRepository(sp.GetRequiredService<FinanceDbContext>()));
+builder.Services.AddScoped<IAccountRepository>(sp => new AccountRepository(sp.GetRequiredService<FinanceDbContext>()));
 
 // --- 5. Service Registrations & Unit of Work Integration ---
 // เราจะฉีด UnitOfWork ที่ถือ Context ของแต่ละ Module เข้าไปใน Service นั้นๆ โดยตรง
@@ -154,6 +165,17 @@ builder.Services.AddScoped<IPurchasingService>(sp =>
     var supplierRepo = sp.GetRequiredService<ISupplierRepository>();
     var purchaseOrderRepo = sp.GetRequiredService<IPurchaseOrderRepository>();
     return new PurchasingService(uow, inventoryService, supplierRepo, purchaseOrderRepo);
+});
+
+builder.Services.AddScoped<IFinanceService>(sp =>
+{
+    var context = sp.GetRequiredService<FinanceDbContext>();
+    var uow = new UnitOfWork(context);
+    var invoiceRepo = sp.GetRequiredService<IInvoiceRepository>();
+    var paymentRepo = sp.GetRequiredService<IPaymentRepository>();
+    var accountRepo = sp.GetRequiredService<IAccountRepository>();
+    var supplierRepo = sp.GetRequiredService<ISupplierRepository>();
+    return new FinanceService(uow, invoiceRepo, paymentRepo, accountRepo, supplierRepo);
 });
 
 // --- 6. Pipeline configuration ---

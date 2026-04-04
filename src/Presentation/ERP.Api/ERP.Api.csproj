@@ -28,6 +28,9 @@
     <ProjectReference Include="..\..\Modules\Purchasing\ERP.Purchasing.Application\ERP.Purchasing.Application.csproj" />
     <ProjectReference Include="..\..\Modules\Purchasing\ERP.Purchasing.Domain\ERP.Purchasing.Domain.csproj" />
     <ProjectReference Include="..\..\Modules\Purchasing\ERP.Purchasing.Infrastructure\ERP.Purchasing.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\ERP.Finance.Application\ERP.Finance.Application.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\ERP.Finance.Domain\ERP.Finance.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\Finance\ERP.Finance.Infrastructure\ERP.Finance.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\ERP.Shared\ERP.Shared.csproj" />
     <ProjectReference Include="..\..\Shared\ERP.Shared.Infrastructure\ERP.Shared.Infrastructure.csproj" />
   </ItemGroup>
