@@ -24,20 +24,20 @@ public class DashboardController : ControllerBase
     [HttpGet("summary")]
     public async Task<ActionResult<DashboardSummaryDto>> GetSummary(CancellationToken ct)
     {
-        // ดึงข้อมูลจาก Sales Module
-        var totalSales = await _salesService.GetTotalSalesAsync(null, null, ct);
+        var now = DateTime.UtcNow;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+        var totalSales = await _salesService.GetTotalSalesAsync(startOfMonth, now, ct);
         var pendingCount = await _salesService.GetPendingOrdersCountAsync(ct);
         var recentOrders = await _salesService.GetRecentOrdersAsync(5, ct);
-
-        // ดึงข้อมูลจาก Inventory Module (สมมติว่าคุณมี Method เช็คของใกล้หมดสต็อก)
-        // var lowStockCount = await _inventoryService.GetLowStockCountAsync(10, ct); 
+        var lowStockProducts = await _inventoryService.GetLowStockProductsAsync(10, ct);
 
         var summary = new DashboardSummaryDto
         {
             TotalSales = totalSales,
             PendingOrdersCount = pendingCount,
             RecentOrders = recentOrders,
-            LowStockProductsCount = 0, // รอเติม Logic จาก InventoryService
+            LowStockProductsCount = lowStockProducts.Count(),
             TotalCustomers = (await _salesService.GetAllCustomersAsync(ct)).Count()
         };
 

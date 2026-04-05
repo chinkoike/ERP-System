@@ -36,7 +36,19 @@ using ERP.Shared.Infrastructure.Repositories;
 using ERP.Shared.Infrastructure.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
+// 2. ตั้งค่า CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:5173") // พอร์ตของฝั่ง React/Vue
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
 // 1. เพิ่ม Authentication & JWT Middleware
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Secret"] ?? "Your_Default_Very_Secret_Key_32_Chars";
@@ -195,6 +207,7 @@ builder.Services.AddScoped<IReportService>(sp =>
 
 // --- 6. Pipeline configuration ---
 var app = builder.Build();
+app.UseCors(myAllowSpecificOrigins);
 app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())

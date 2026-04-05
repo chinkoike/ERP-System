@@ -17,21 +17,25 @@ const router = createRouter({
     {
       path: '/dashboard',
       name: 'dashboard',
-      // TODO: สร้าง DashboardView ใน module ถัดไป
-      component: () => import('@/views/LoginView.vue'),
+      component: () => import('@/views/DashboardView.vue'),
       meta: { requiresAuth: true },
     },
+    // จะเพิ่ม routes ต่อไปที่นี่
+    // { path: '/inventory', name: 'inventory', component: ... }
+    // { path: '/sales',     name: 'sales',     component: ... }
+    // { path: '/purchasing',name: 'purchasing', component: ... }
+    // { path: '/finance',   name: 'finance',   component: ... }
+    // { path: '/report',    name: 'report',    component: ... }
+    // { path: '/users',     name: 'users',     component: ... }
   ],
 })
 
-// Auth Guard
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' }
   }
-
   if (to.name === 'login' && authStore.isAuthenticated) {
     return { name: 'dashboard' }
   }
