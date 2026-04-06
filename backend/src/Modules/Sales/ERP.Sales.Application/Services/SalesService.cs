@@ -252,14 +252,29 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<OrderSummaryDto>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken ct = default)
     {
         var orders = await _orderRepository.FindAsync(o => o.CustomerId == customerId, ct);
-        return orders.Select(o => new OrderSummaryDto
+        var customer = await _customerRepository.GetByIdAsync(customerId, ct);
+        var customerName = customer != null
+            ? $"{customer.FirstName} {customer.LastName}"
+            : "Unknown";
+
+        var orderSummaries = new List<OrderSummaryDto>();
+        foreach (var order in orders)
         {
-            OrderId = o.Id,
-            OrderNumber = o.OrderNumber,
-            OrderDate = o.OrderDate,
-            TotalAmount = o.TotalAmount,
-            Status = o.Status.ToString()
-        });
+            var items = await _orderItemRepository.GetByOrderIdAsync(order.Id, ct);
+            orderSummaries.Add(new OrderSummaryDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                CustomerId = order.CustomerId,
+                CustomerName = customerName,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                ItemCount = items.Count(),
+                Status = order.Status.ToString()
+            });
+        }
+
+        return orderSummaries;
     }
 
     public async Task<IEnumerable<Order>> GetOrdersByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -346,15 +361,30 @@ public class SalesService : ISalesService
     public async Task<IEnumerable<OrderSummaryDto>> GetRecentOrdersAsync(int count, CancellationToken ct = default)
     {
         var orders = await _orderRepository.GetAllAsync(ct);
-        return orders.OrderByDescending(o => o.OrderDate)
-                     .Take(count)
-                     .Select(o => new OrderSummaryDto
-                     {
-                         OrderId = o.Id,
-                         OrderNumber = o.OrderNumber,
-                         TotalAmount = o.TotalAmount,
-                         Status = o.Status.ToString()
-                     });
+        var recentOrders = orders.OrderByDescending(o => o.OrderDate).Take(count).ToList();
+        var orderSummaries = new List<OrderSummaryDto>();
+
+        foreach (var order in recentOrders)
+        {
+            var customer = await _customerRepository.GetByIdAsync(order.CustomerId, ct);
+            var items = await _orderItemRepository.GetByOrderIdAsync(order.Id, ct);
+
+            orderSummaries.Add(new OrderSummaryDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                CustomerId = order.CustomerId,
+                CustomerName = customer != null
+                    ? $"{customer.FirstName} {customer.LastName}"
+                    : "Unknown",
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                ItemCount = items.Count(),
+                Status = order.Status.ToString()
+            });
+        }
+
+        return orderSummaries;
     }
 
     public async Task<int> GetPendingOrdersCountAsync(CancellationToken ct = default)

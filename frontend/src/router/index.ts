@@ -26,7 +26,12 @@ const router = createRouter({
       component: () => import('@/views/InventoryView.vue'),
       meta: { requiresAuth: true },
     },
-    // { path: '/sales',     name: 'sales',     component: ... }
+    {
+      path: '/sales',
+      name: 'sales',
+      component: () => import('@/views/SalesView.vue'),
+      meta: { requiresAuth: true },
+    },
     // { path: '/purchasing',name: 'purchasing', component: ... }
     // { path: '/finance',   name: 'finance',   component: ... }
     // { path: '/report',    name: 'report',    component: ... }

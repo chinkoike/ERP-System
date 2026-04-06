@@ -28,31 +28,38 @@ public class InventoryService : IInventoryService
     public async Task<ProductDto?> GetProductByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var product = await _productRepository.GetByIdAsync(id, cancellationToken);
-        return product == null ? null : MapToProductDto(product);
+        if (product == null) return null;
+        var categoryName = (await _categoryRepository.GetByIdAsync(product.CategoryId, cancellationToken))?.Name;
+        return MapToProductDto(product, categoryName);
     }
 
     public async Task<ProductDto?> GetProductBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
         var product = await _productRepository.GetBySkuAsync(sku, cancellationToken);
-        return product == null ? null : MapToProductDto(product);
+        if (product == null) return null;
+        var categoryName = (await _categoryRepository.GetByIdAsync(product.CategoryId, cancellationToken))?.Name;
+        return MapToProductDto(product, categoryName);
     }
 
     public async Task<IEnumerable<ProductDto>> GetAllProductsAsync(CancellationToken cancellationToken = default)
     {
         var products = await _productRepository.GetAllAsync(cancellationToken);
-        return products.Select(MapToProductDto);
+        var categoryMap = (await _categoryRepository.GetAllAsync(cancellationToken)).ToDictionary(c => c.Id, c => c.Name);
+        return products.Select(p => MapToProductDto(p, categoryMap.TryGetValue(p.CategoryId, out var name) ? name : null));
     }
 
     public async Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var products = await _productRepository.GetByCategoryAsync(categoryId, cancellationToken);
-        return products.Select(MapToProductDto);
+        var categoryName = (await _categoryRepository.GetByIdAsync(categoryId, cancellationToken))?.Name;
+        return products.Select(p => MapToProductDto(p, categoryName));
     }
 
     public async Task<IEnumerable<ProductDto>> GetLowStockProductsAsync(int threshold = 10, CancellationToken cancellationToken = default)
     {
         var products = await _productRepository.GetLowStockProductsAsync(threshold, cancellationToken);
-        return products.Select(MapToProductDto);
+        var categoryMap = (await _categoryRepository.GetAllAsync(cancellationToken)).ToDictionary(c => c.Id, c => c.Name);
+        return products.Select(p => MapToProductDto(p, categoryMap.TryGetValue(p.CategoryId, out var name) ? name : null));
     }
 
     public async Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default)
@@ -197,7 +204,7 @@ public class InventoryService : IInventoryService
 
     // --- Helper Mapping Methods ---
 
-    private static ProductDto MapToProductDto(Product p) => new()
+    private static ProductDto MapToProductDto(Product p, string? categoryName = null) => new()
     {
         Id = p.Id,
         Name = p.Name,
@@ -208,6 +215,7 @@ public class InventoryService : IInventoryService
         BasePrice = p.BasePrice,
         CurrentStock = p.CurrentStock,
         CategoryId = p.CategoryId,
+        CategoryName = categoryName ?? p.Category?.Name ?? string.Empty,
         CreatedAt = p.CreatedAt,
         CreatedBy = p.CreatedBy ?? "System",
         UpdatedAt = p.LastModifiedAt,

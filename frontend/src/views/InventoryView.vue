@@ -1,109 +1,64 @@
 <template>
-  <div class="min-h-screen" style="background: #f7f6f3; font-family: 'DM Sans', sans-serif">
+  <div class="min-h-screen bg-slate-50 font-sans">
     <!-- Top bar -->
-    <header
-      style="background: white; border-bottom: 0.5px solid rgba(0, 0, 0, 0.08)"
-      class="px-8 py-3 flex items-center justify-between"
-    >
-      <div class="flex items-center gap-2">
-        <div
-          style="width: 26px; height: 26px; background: #0f0f0f; border-radius: 6px"
-          class="flex items-center justify-center"
-        >
-          <svg
-            width="12"
-            height="12"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="white"
-            stroke-width="2"
-          >
+    <header class="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
+              stroke-width="2"
               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
             />
           </svg>
         </div>
-        <span style="font-size: 13px; font-weight: 500">ERP System</span>
-        <span style="color: rgba(0, 0, 0, 0.2); margin: 0 4px">/</span>
-        <span style="font-size: 13px; color: #9a9a9a">Inventory</span>
+        <span class="text-sm font-medium text-slate-900">ERP System</span>
+        <span class="text-sm text-slate-300">/</span>
+        <span class="text-sm text-slate-500">Inventory</span>
       </div>
       <div class="flex items-center gap-3">
         <div
-          style="
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: #f0efe9;
-            border: 0.5px solid rgba(0, 0, 0, 0.1);
-          "
-          class="flex items-center justify-center"
+          class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center"
         >
-          <span style="font-size: 11px; font-weight: 500; color: #5a5a5a">{{ userInitial }}</span>
+          <span class="text-xs font-semibold text-slate-600">{{ userInitial }}</span>
         </div>
-        <button @click="handleLogout" style="font-size: 13px; color: #9a9a9a">Sign out</button>
+        <button
+          @click="handleLogout"
+          class="text-sm text-slate-500 hover:text-slate-700 transition"
+        >
+          Sign out
+        </button>
       </div>
     </header>
 
     <main class="px-8 py-8 max-w-7xl mx-auto">
       <!-- Page heading -->
-      <div class="flex items-end justify-between mb-6">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-6">
         <div>
-          <h1 style="font-size: 22px; font-weight: 300; letter-spacing: -0.03em; color: #0f0f0f">
-            Inventory
-          </h1>
-          <p style="font-size: 13px; color: #9a9a9a; margin-top: 2px">จัดการสินค้าและหมวดหมู่</p>
+          <h1 class="text-3xl font-semibold text-slate-900">Inventory</h1>
+          <p class="text-sm text-slate-500 mt-2">จัดการสินค้าและหมวดหมู่</p>
         </div>
         <button
           @click="openProductModal()"
-          style="
-            background: #0f0f0f;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 9px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-          "
+          class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
-          <span style="font-size: 16px; line-height: 1">+</span> เพิ่มสินค้า
+          <span class="text-lg leading-none">+</span> เพิ่มสินค้า
         </button>
       </div>
 
       <!-- Tabs -->
       <div
-        style="
-          display: flex;
-          gap: 0;
-          background: white;
-          border: 0.5px solid rgba(0, 0, 0, 0.08);
-          border-radius: 10px;
-          padding: 4px;
-          width: fit-content;
-          margin-bottom: 1.5rem;
-        "
+        class="inline-flex items-center rounded-2xl border border-slate-200 bg-white p-1 mb-6 shadow-sm"
       >
         <button
           v-for="tab in tabs"
           :key="tab.key"
           @click="activeTab = tab.key"
-          :style="
+          :class="
             activeTab === tab.key
-              ? 'background:#0f0f0f;color:white;border-radius:7px;'
-              : 'background:transparent;color:#9a9a9a;'
-          "
-          style="
-            border: none;
-            padding: 7px 18px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
+              ? 'rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white'
+              : 'rounded-2xl px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900'
           "
         >
           {{ tab.label }}
@@ -112,14 +67,9 @@
 
       <!-- Loading -->
       <div v-if="store.loading" class="flex items-center justify-center py-24">
-        <svg
-          class="animate-spin"
-          style="width: 20px; height: 20px; color: #d1d0cb"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
+        <svg class="animate-spin h-5 w-5 text-slate-300" fill="none" viewBox="0 0 24 24">
           <circle
-            style="opacity: 0.25"
+            class="opacity-25"
             cx="12"
             cy="12"
             r="10"
@@ -127,7 +77,7 @@
             stroke-width="4"
           />
           <path
-            style="opacity: 0.75"
+            class="opacity-75"
             fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
           />
@@ -139,17 +89,9 @@
         <div v-if="activeTab === 'products'">
           <!-- Filter row -->
           <div class="flex items-center gap-3 mb-4">
-            <div style="position: relative; flex: 1; max-width: 320px">
+            <div class="relative flex-1 max-w-xs">
               <svg
-                style="
-                  position: absolute;
-                  left: 10px;
-                  top: 50%;
-                  transform: translateY(-50%);
-                  width: 14px;
-                  height: 14px;
-                  color: #9a9a9a;
-                "
+                class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -165,30 +107,12 @@
                 v-model="searchProduct"
                 type="text"
                 placeholder="ค้นหาสินค้า..."
-                style="
-                  width: 100%;
-                  padding: 8px 12px 8px 32px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.1);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  background: white;
-                  outline: none;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
             <select
               v-model="filterCategory"
-              style="
-                padding: 8px 12px;
-                border: 0.5px solid rgba(0, 0, 0, 0.1);
-                border-radius: 8px;
-                font-size: 13px;
-                background: white;
-                color: #5a5a5a;
-                outline: none;
-                cursor: pointer;
-              "
+              class="rounded-2xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-slate-300"
             >
               <option value="">ทุกหมวดหมู่</option>
               <option v-for="c in store.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
@@ -196,210 +120,100 @@
           </div>
 
           <!-- Products table -->
-          <div
-            style="
-              background: white;
-              border-radius: 12px;
-              border: 0.5px solid rgba(0, 0, 0, 0.08);
-              overflow: hidden;
-            "
-          >
-            <table style="width: 100%; border-collapse: collapse">
+          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="min-w-full border-collapse">
               <thead>
-                <tr style="border-bottom: 0.5px solid rgba(0, 0, 0, 0.06)">
+                <tr class="border-b border-slate-100 bg-slate-50">
                   <th
-                    style="
-                      text-align: left;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     สินค้า
                   </th>
                   <th
-                    style="
-                      text-align: left;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     SKU
                   </th>
                   <th
-                    style="
-                      text-align: left;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     หมวดหมู่
                   </th>
                   <th
-                    style="
-                      text-align: right;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     ราคา
                   </th>
                   <th
-                    style="
-                      text-align: center;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     Stock
                   </th>
                   <th
-                    style="
-                      text-align: center;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     สถานะ
                   </th>
-                  <th style="padding: 10px 16px"></th>
+                  <th class="px-6 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="filteredProducts.length === 0">
-                  <td
-                    colspan="7"
-                    style="text-align: center; padding: 3rem; font-size: 13px; color: #9a9a9a"
-                  >
+                  <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400">
                     ไม่พบสินค้า
                   </td>
                 </tr>
                 <tr
                   v-for="(p, i) in filteredProducts"
                   :key="p.id"
-                  :style="i % 2 === 1 ? 'background:#fafaf8;' : ''"
-                  style="border-bottom: 0.5px solid rgba(0, 0, 0, 0.04)"
+                  :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
                 >
-                  <td style="padding: 12px 16px">
-                    <div style="font-size: 13px; font-weight: 500; color: #0f0f0f">
-                      {{ p.name }}
-                    </div>
-                    <div
-                      v-if="p.description"
-                      style="
-                        font-size: 11px;
-                        color: #9a9a9a;
-                        margin-top: 2px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        max-width: 200px;
-                      "
-                    >
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-semibold text-slate-900">{{ p.name }}</div>
+                    <div v-if="p.description" class="max-w-50 truncate text-xs text-slate-500">
                       {{ p.description }}
                     </div>
                   </td>
-                  <td
-                    style="
-                      padding: 12px 16px;
-                      font-family: 'DM Mono', monospace;
-                      font-size: 12px;
-                      color: #5a5a5a;
-                    "
-                  >
+                  <td class="px-6 py-4 text-xs font-medium text-slate-500 font-mono">
                     {{ p.sku }}
                   </td>
-                  <td style="padding: 12px 16px; font-size: 13px; color: #5a5a5a">
-                    {{ p.categoryName }}
-                  </td>
-                  <td
-                    style="
-                      padding: 12px 16px;
-                      font-size: 13px;
-                      font-weight: 500;
-                      color: #0f0f0f;
-                      text-align: right;
-                    "
-                  >
+                  <td class="px-6 py-4 text-sm text-slate-500">{{ p.categoryName }}</td>
+                  <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
                     {{ formatCurrency(p.basePrice) }}
                   </td>
-                  <td style="padding: 12px 16px; text-align: center">
+                  <td class="px-6 py-4 text-center text-sm">
                     <span
-                      style="font-size: 13px; font-weight: 500"
-                      :style="p.currentStock <= 10 ? 'color:#dc2626;' : 'color:#0f0f0f;'"
+                      :class="
+                        p.currentStock <= 10
+                          ? 'font-semibold text-rose-600'
+                          : 'font-semibold text-slate-900'
+                      "
                       >{{ p.currentStock }}</span
                     >
                   </td>
-                  <td style="padding: 12px 16px; text-align: center">
-                    <span :style="stockStatusStyle(p.currentStock)">{{
+                  <td class="px-6 py-4 text-center">
+                    <span :class="stockStatusClass(p.currentStock)">{{
                       stockStatusLabel(p.currentStock)
                     }}</span>
                   </td>
-                  <td style="padding: 12px 16px">
+                  <td class="px-6 py-4">
                     <div class="flex items-center gap-2 justify-end">
                       <button
                         @click="openStockModal(p)"
                         title="ปรับ Stock"
-                        style="
-                          border: 0.5px solid rgba(0, 0, 0, 0.1);
-                          background: white;
-                          border-radius: 6px;
-                          padding: 5px 8px;
-                          font-size: 12px;
-                          cursor: pointer;
-                          color: #5a5a5a;
-                        "
+                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
                       >
                         ±Stock
                       </button>
                       <button
                         @click="openProductModal(p)"
-                        style="
-                          border: 0.5px solid rgba(0, 0, 0, 0.1);
-                          background: white;
-                          border-radius: 6px;
-                          padding: 5px 8px;
-                          font-size: 12px;
-                          cursor: pointer;
-                          color: #5a5a5a;
-                        "
+                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
                       >
                         แก้ไข
                       </button>
                       <button
                         @click="confirmDelete('product', p.id, p.name)"
-                        style="
-                          border: 0.5px solid rgba(220, 38, 38, 0.2);
-                          background: white;
-                          border-radius: 6px;
-                          padding: 5px 8px;
-                          font-size: 12px;
-                          cursor: pointer;
-                          color: #dc2626;
-                        "
+                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
                       >
                         ลบ
                       </button>
@@ -416,129 +230,60 @@
           <div class="flex justify-end mb-4">
             <button
               @click="openCategoryModal()"
-              style="
-                background: #0f0f0f;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 9px 16px;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-              "
+              class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             >
-              <span style="font-size: 16px; line-height: 1">+</span> เพิ่มหมวดหมู่
+              <span class="text-lg leading-none">+</span> เพิ่มหมวดหมู่
             </button>
           </div>
-          <div
-            style="
-              background: white;
-              border-radius: 12px;
-              border: 0.5px solid rgba(0, 0, 0, 0.08);
-              overflow: hidden;
-            "
-          >
-            <table style="width: 100%; border-collapse: collapse">
+          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="min-w-full border-collapse">
               <thead>
-                <tr style="border-bottom: 0.5px solid rgba(0, 0, 0, 0.06)">
+                <tr class="border-b border-slate-100 bg-slate-50">
                   <th
-                    style="
-                      text-align: left;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     ชื่อหมวดหมู่
                   </th>
                   <th
-                    style="
-                      text-align: left;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     คำอธิบาย
                   </th>
                   <th
-                    style="
-                      text-align: center;
-                      padding: 10px 16px;
-                      font-size: 11px;
-                      font-weight: 500;
-                      color: #9a9a9a;
-                      letter-spacing: 0.05em;
-                      text-transform: uppercase;
-                    "
+                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                   >
                     สร้างเมื่อ
                   </th>
-                  <th style="padding: 10px 16px"></th>
+                  <th class="px-6 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="store.categories.length === 0">
-                  <td
-                    colspan="4"
-                    style="text-align: center; padding: 3rem; font-size: 13px; color: #9a9a9a"
-                  >
+                  <td colspan="4" class="px-6 py-12 text-center text-sm text-slate-400">
                     ไม่พบหมวดหมู่
                   </td>
                 </tr>
                 <tr
                   v-for="(c, i) in store.categories"
                   :key="c.id"
-                  :style="i % 2 === 1 ? 'background:#fafaf8;' : ''"
-                  style="border-bottom: 0.5px solid rgba(0, 0, 0, 0.04)"
+                  :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
                 >
-                  <td style="padding: 12px 16px; font-size: 13px; font-weight: 500; color: #0f0f0f">
-                    {{ c.name }}
-                  </td>
-                  <td style="padding: 12px 16px; font-size: 13px; color: #9a9a9a">
-                    {{ c.description ?? '—' }}
-                  </td>
-                  <td
-                    style="padding: 12px 16px; font-size: 12px; color: #9a9a9a; text-align: center"
-                  >
+                  <td class="px-6 py-4 text-sm font-semibold text-slate-900">{{ c.name }}</td>
+                  <td class="px-6 py-4 text-sm text-slate-500">{{ c.description ?? '—' }}</td>
+                  <td class="px-6 py-4 text-center text-sm text-slate-500">
                     {{ formatDate(c.createdAt) }}
                   </td>
-                  <td style="padding: 12px 16px">
+                  <td class="px-6 py-4">
                     <div class="flex items-center gap-2 justify-end">
                       <button
                         @click="openCategoryModal(c)"
-                        style="
-                          border: 0.5px solid rgba(0, 0, 0, 0.1);
-                          background: white;
-                          border-radius: 6px;
-                          padding: 5px 8px;
-                          font-size: 12px;
-                          cursor: pointer;
-                          color: #5a5a5a;
-                        "
+                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
                       >
                         แก้ไข
                       </button>
                       <button
                         @click="confirmDelete('category', c.id, c.name)"
-                        style="
-                          border: 0.5px solid rgba(220, 38, 38, 0.2);
-                          background: white;
-                          border-radius: 6px;
-                          padding: 5px 8px;
-                          font-size: 12px;
-                          cursor: pointer;
-                          color: #dc2626;
-                        "
+                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
                       >
                         ลบ
                       </button>
@@ -556,181 +301,62 @@
     <Teleport to="body">
       <div
         v-if="showProductModal"
-        style="
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 50;
-          padding: 1rem;
-        "
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
       >
-        <div
-          style="
-            background: white;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 480px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-          "
-        >
-          <div
-            style="
-              padding: 1.25rem 1.5rem;
-              border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
-            <span style="font-size: 15px; font-weight: 500; color: #0f0f0f">{{
+        <div class="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+            <span class="text-base font-semibold text-slate-900">{{
               editingProduct ? 'แก้ไขสินค้า' : 'เพิ่มสินค้า'
             }}</span>
             <button
               @click="showProductModal = false"
-              style="
-                border: none;
-                background: none;
-                cursor: pointer;
-                color: #9a9a9a;
-                font-size: 18px;
-              "
+              class="text-slate-500 hover:text-slate-700 text-2xl"
             >
               ×
             </button>
           </div>
-          <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem">
+          <div class="space-y-4 p-6">
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >ชื่อสินค้า *</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">ชื่อสินค้า *</label>
               <input
                 v-model="productForm.name"
                 type="text"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
             <div v-if="!editingProduct">
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >SKU *</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">SKU *</label>
               <input
                 v-model="productForm.sku"
                 type="text"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  font-family: 'DM Mono', monospace;
-                  outline: none;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm font-mono text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <label
-                  style="
-                    font-size: 12px;
-                    font-weight: 500;
-                    color: #5a5a5a;
-                    display: block;
-                    margin-bottom: 5px;
-                  "
-                  >ราคา (บาท) *</label
-                >
+                <label class="mb-2 block text-sm font-medium text-slate-600">ราคา (บาท) *</label>
                 <input
                   v-model.number="productForm.basePrice"
                   type="number"
                   min="0"
-                  style="
-                    width: 100%;
-                    padding: 9px 12px;
-                    border: 0.5px solid rgba(0, 0, 0, 0.12);
-                    border-radius: 8px;
-                    font-size: 13px;
-                    outline: none;
-                    color: #0f0f0f;
-                  "
+                  class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
                 />
               </div>
               <div v-if="!editingProduct">
-                <label
-                  style="
-                    font-size: 12px;
-                    font-weight: 500;
-                    color: #5a5a5a;
-                    display: block;
-                    margin-bottom: 5px;
-                  "
-                  >Stock เริ่มต้น</label
-                >
+                <label class="mb-2 block text-sm font-medium text-slate-600">Stock เริ่มต้น</label>
                 <input
                   v-model.number="productForm.initialStock"
                   type="number"
                   min="0"
-                  style="
-                    width: 100%;
-                    padding: 9px 12px;
-                    border: 0.5px solid rgba(0, 0, 0, 0.12);
-                    border-radius: 8px;
-                    font-size: 13px;
-                    outline: none;
-                    color: #0f0f0f;
-                  "
+                  class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
                 />
               </div>
             </div>
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >หมวดหมู่ *</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">หมวดหมู่ *</label>
               <select
                 v-model="productForm.categoryId"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  background: white;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               >
                 <option value="">เลือกหมวดหมู่</option>
                 <option v-for="c in store.categories" :key="c.id" :value="c.id">
@@ -739,82 +365,28 @@
               </select>
             </div>
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >คำอธิบาย</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">คำอธิบาย</label>
               <textarea
                 v-model="productForm.description"
                 rows="2"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  resize: vertical;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none resize-vertical focus:ring-2 focus:ring-slate-300"
               ></textarea>
             </div>
-            <div
-              v-if="modalError"
-              style="
-                font-size: 12px;
-                color: #dc2626;
-                background: #fef2f2;
-                padding: 8px 12px;
-                border-radius: 6px;
-              "
-            >
+            <div v-if="modalError" class="rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {{ modalError }}
             </div>
           </div>
-          <div
-            style="
-              padding: 1rem 1.5rem;
-              border-top: 0.5px solid rgba(0, 0, 0, 0.06);
-              display: flex;
-              gap: 8px;
-              justify-content: flex-end;
-            "
-          >
+          <div class="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4">
             <button
               @click="showProductModal = false"
-              style="
-                border: 0.5px solid rgba(0, 0, 0, 0.1);
-                background: white;
-                border-radius: 8px;
-                padding: 8px 16px;
-                font-size: 13px;
-                cursor: pointer;
-                color: #5a5a5a;
-              "
+              class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
               ยกเลิก
             </button>
             <button
               @click="submitProduct"
               :disabled="modalLoading"
-              style="
-                background: #0f0f0f;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-                opacity: 1;
-              "
-              :style="modalLoading ? 'opacity:0.5;cursor:not-allowed;' : ''"
+              class="rounded-2xl bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {{ modalLoading ? 'กำลังบันทึก...' : 'บันทึก' }}
             </button>
@@ -827,171 +399,71 @@
     <Teleport to="body">
       <div
         v-if="showStockModal"
-        style="
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 50;
-          padding: 1rem;
-        "
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
       >
-        <div
-          style="
-            background: white;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 360px;
-            overflow: hidden;
-          "
-        >
-          <div
-            style="
-              padding: 1.25rem 1.5rem;
-              border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
-            <span style="font-size: 15px; font-weight: 500; color: #0f0f0f">ปรับ Stock</span>
+        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+            <span class="text-base font-semibold text-slate-900">ปรับ Stock</span>
             <button
               @click="showStockModal = false"
-              style="
-                border: none;
-                background: none;
-                cursor: pointer;
-                color: #9a9a9a;
-                font-size: 18px;
-              "
+              class="text-slate-500 hover:text-slate-700 text-2xl"
             >
               ×
             </button>
           </div>
-          <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem">
-            <div style="background: #f7f6f3; border-radius: 8px; padding: 12px">
-              <div style="font-size: 13px; font-weight: 500; color: #0f0f0f">
-                {{ stockTarget?.name }}
-              </div>
-              <div style="font-size: 12px; color: #9a9a9a; margin-top: 2px">
+          <div class="space-y-4 p-6">
+            <div class="rounded-2xl bg-slate-50 px-4 py-3">
+              <div class="text-sm font-semibold text-slate-900">{{ stockTarget?.name }}</div>
+              <div class="mt-1 text-sm text-slate-500">
                 Stock ปัจจุบัน:
-                <strong style="color: #0f0f0f">{{ stockTarget?.currentStock }}</strong>
+                <strong class="text-slate-900">{{ stockTarget?.currentStock }}</strong>
               </div>
             </div>
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
+              <label class="mb-2 block text-sm font-medium text-slate-600"
                 >จำนวนที่เปลี่ยน (+ เพิ่ม / - ลด)</label
               >
               <input
                 v-model.number="stockForm.quantityChange"
                 type="number"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
-              <div v-if="stockTarget" style="font-size: 11px; color: #9a9a9a; margin-top: 4px">
+              <div v-if="stockTarget" class="mt-2 text-sm text-slate-500">
                 Stock ใหม่:
                 <strong
-                  :style="
+                  :class="
                     stockTarget.currentStock + stockForm.quantityChange < 0
-                      ? 'color:#dc2626'
-                      : 'color:#0f0f0f'
+                      ? 'text-rose-600'
+                      : 'text-slate-900'
                   "
                   >{{ stockTarget.currentStock + stockForm.quantityChange }}</strong
                 >
               </div>
             </div>
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >หมายเหตุ</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">หมายเหตุ</label>
               <input
                 v-model="stockForm.note"
                 type="text"
                 placeholder="เช่น รับสินค้าใหม่, ของเสียหาย"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
-            <div
-              v-if="modalError"
-              style="
-                font-size: 12px;
-                color: #dc2626;
-                background: #fef2f2;
-                padding: 8px 12px;
-                border-radius: 6px;
-              "
-            >
+            <div v-if="modalError" class="rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {{ modalError }}
             </div>
           </div>
-          <div
-            style="
-              padding: 1rem 1.5rem;
-              border-top: 0.5px solid rgba(0, 0, 0, 0.06);
-              display: flex;
-              gap: 8px;
-              justify-content: flex-end;
-            "
-          >
+          <div class="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4">
             <button
               @click="showStockModal = false"
-              style="
-                border: 0.5px solid rgba(0, 0, 0, 0.1);
-                background: white;
-                border-radius: 8px;
-                padding: 8px 16px;
-                font-size: 13px;
-                cursor: pointer;
-                color: #5a5a5a;
-              "
+              class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
               ยกเลิก
             </button>
             <button
               @click="submitStock"
               :disabled="modalLoading"
-              style="
-                background: #0f0f0f;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-              "
-              :style="modalLoading ? 'opacity:0.5;cursor:not-allowed;' : ''"
+              class="rounded-2xl bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {{ modalLoading ? 'กำลังบันทึก...' : 'บันทึก' }}
             </button>
@@ -1004,153 +476,52 @@
     <Teleport to="body">
       <div
         v-if="showCategoryModal"
-        style="
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 50;
-          padding: 1rem;
-        "
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
       >
-        <div
-          style="
-            background: white;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            overflow: hidden;
-          "
-        >
-          <div
-            style="
-              padding: 1.25rem 1.5rem;
-              border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            "
-          >
-            <span style="font-size: 15px; font-weight: 500; color: #0f0f0f">{{
+        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+            <span class="text-base font-semibold text-slate-900">{{
               editingCategory ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่'
             }}</span>
             <button
               @click="showCategoryModal = false"
-              style="
-                border: none;
-                background: none;
-                cursor: pointer;
-                color: #9a9a9a;
-                font-size: 18px;
-              "
+              class="text-slate-500 hover:text-slate-700 text-2xl"
             >
               ×
             </button>
           </div>
-          <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem">
+          <div class="space-y-4 p-6">
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >ชื่อหมวดหมู่ *</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">ชื่อหมวดหมู่ *</label>
               <input
                 v-model="categoryForm.name"
                 type="text"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
             <div>
-              <label
-                style="
-                  font-size: 12px;
-                  font-weight: 500;
-                  color: #5a5a5a;
-                  display: block;
-                  margin-bottom: 5px;
-                "
-                >คำอธิบาย</label
-              >
+              <label class="mb-2 block text-sm font-medium text-slate-600">คำอธิบาย</label>
               <textarea
                 v-model="categoryForm.description"
                 rows="2"
-                style="
-                  width: 100%;
-                  padding: 9px 12px;
-                  border: 0.5px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 8px;
-                  font-size: 13px;
-                  outline: none;
-                  resize: vertical;
-                  color: #0f0f0f;
-                "
+                class="w-full rounded-2xl border border-slate-200 bg-white py-2 px-3 text-sm text-slate-900 outline-none resize-vertical focus:ring-2 focus:ring-slate-300"
               ></textarea>
             </div>
-            <div
-              v-if="modalError"
-              style="
-                font-size: 12px;
-                color: #dc2626;
-                background: #fef2f2;
-                padding: 8px 12px;
-                border-radius: 6px;
-              "
-            >
+            <div v-if="modalError" class="rounded-2xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
               {{ modalError }}
             </div>
           </div>
-          <div
-            style="
-              padding: 1rem 1.5rem;
-              border-top: 0.5px solid rgba(0, 0, 0, 0.06);
-              display: flex;
-              gap: 8px;
-              justify-content: flex-end;
-            "
-          >
+          <div class="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4">
             <button
               @click="showCategoryModal = false"
-              style="
-                border: 0.5px solid rgba(0, 0, 0, 0.1);
-                background: white;
-                border-radius: 8px;
-                padding: 8px 16px;
-                font-size: 13px;
-                cursor: pointer;
-                color: #5a5a5a;
-              "
+              class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
               ยกเลิก
             </button>
             <button
               @click="submitCategory"
               :disabled="modalLoading"
-              style="
-                background: #0f0f0f;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-              "
-              :style="modalLoading ? 'opacity:0.5;cursor:not-allowed;' : ''"
+              class="rounded-2xl bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {{ modalLoading ? 'กำลังบันทึก...' : 'บันทึก' }}
             </button>
@@ -1163,62 +534,25 @@
     <Teleport to="body">
       <div
         v-if="showDeleteModal"
-        style="
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 50;
-          padding: 1rem;
-        "
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
       >
-        <div
-          style="
-            background: white;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 360px;
-            padding: 1.5rem;
-          "
-        >
-          <div style="font-size: 15px; font-weight: 500; color: #0f0f0f; margin-bottom: 8px">
-            ยืนยันการลบ
-          </div>
-          <div style="font-size: 13px; color: #5a5a5a; margin-bottom: 1.5rem">
-            คุณต้องการลบ <strong style="color: #0f0f0f">{{ deleteTarget.name }}</strong> ใช่หรือไม่?
+        <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white p-6 shadow-2xl">
+          <div class="mb-2 text-base font-semibold text-slate-900">ยืนยันการลบ</div>
+          <div class="mb-6 text-sm text-slate-500">
+            คุณต้องการลบ <strong class="text-slate-900">{{ deleteTarget.name }}</strong> ใช่หรือไม่?
             ไม่สามารถยกเลิกได้
           </div>
-          <div style="display: flex; gap: 8px; justify-content: flex-end">
+          <div class="flex justify-end gap-2">
             <button
               @click="showDeleteModal = false"
-              style="
-                border: 0.5px solid rgba(0, 0, 0, 0.1);
-                background: white;
-                border-radius: 8px;
-                padding: 8px 16px;
-                font-size: 13px;
-                cursor: pointer;
-                color: #5a5a5a;
-              "
+              class="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
             >
               ยกเลิก
             </button>
             <button
               @click="submitDelete"
               :disabled="modalLoading"
-              style="
-                background: #dc2626;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-              "
-              :style="modalLoading ? 'opacity:0.5;cursor:not-allowed;' : ''"
+              class="rounded-2xl bg-rose-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {{ modalLoading ? 'กำลังลบ...' : 'ลบ' }}
             </button>
@@ -1445,12 +779,12 @@ function stockStatusLabel(stock: number) {
   if (stock <= 10) return 'ใกล้หมด'
   return 'ปกติ'
 }
-function stockStatusStyle(stock: number) {
+function stockStatusClass(stock: number) {
   if (stock === 0)
-    return 'font-size:11px;font-weight:500;background:#fef2f2;color:#dc2626;padding:3px 8px;border-radius:100px;'
+    return 'inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-700'
   if (stock <= 10)
-    return 'font-size:11px;font-weight:500;background:#fffbeb;color:#d97706;padding:3px 8px;border-radius:100px;'
-  return 'font-size:11px;font-weight:500;background:#f0fdf4;color:#16a34a;padding:3px 8px;border-radius:100px;'
+    return 'inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700'
+  return 'inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700'
 }
 
 async function handleLogout() {
