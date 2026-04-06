@@ -96,21 +96,16 @@ public class PurchasingService : IPurchasingService
     // Purchase Order
     public async Task<IEnumerable<PurchaseOrderDto>> GetAllPurchaseOrdersAsync(CancellationToken cancellationToken = default)
     {
-        var orders = await _purchaseOrderRepository.GetAllAsync(cancellationToken);
-        return orders.Select(o => MapToPurchaseOrderDto(o));
+        var orders = await _purchaseOrderRepository.GetAllWithItemsAndSupplierAsync(cancellationToken);
+        return orders.Select(o => MapToPurchaseOrderDto(o, o.Supplier?.Name ?? string.Empty));
     }
 
     public async Task<PurchaseOrderDto?> GetPurchaseOrderByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var order = await _purchaseOrderRepository.GetByIdAsync(id, cancellationToken);
+        var order = await _purchaseOrderRepository.GetByIdWithItemsAndSupplierAsync(id, cancellationToken);
         if (order == null) return null;
 
-        var items = await _purchaseOrderRepository.GetItemsByPurchaseOrderIdAsync(order.Id, cancellationToken);
-        order.Items = items.ToList();
-
-        var supplier = await _supplierRepository.GetByIdAsync(order.SupplierId, cancellationToken);
-
-        return MapToPurchaseOrderDto(order, supplier?.Name ?? string.Empty);
+        return MapToPurchaseOrderDto(order, order.Supplier?.Name ?? string.Empty);
     }
 
     public async Task<Guid> CreatePurchaseOrderAsync(CreatePurchaseOrderDto dto, CancellationToken cancellationToken = default)

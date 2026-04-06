@@ -1,30 +1,39 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+  <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
     <div class="w-full max-w-sm">
-      <!-- Logo / Brand -->
-      <div class="mb-10 text-center">
-        <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-900 rounded-xl mb-4">
-          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
+      <!-- Brand -->
+      <div class="mb-8">
+        <div class="flex items-center gap-2.5 mb-6">
+          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="white"
               stroke-width="2"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
-            />
-          </svg>
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
+              />
+            </svg>
+          </div>
+          <span class="text-sm font-semibold text-slate-900 tracking-tight">ERP System</span>
         </div>
-        <h1 class="text-xl font-semibold text-gray-900 tracking-tight">ERP System</h1>
-        <p class="text-sm text-gray-400 mt-1">Sign in to your account</p>
+        <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Welcome back</h1>
+        <p class="mt-2 text-sm text-slate-500">Sign in to continue to your workspace</p>
       </div>
 
       <!-- Card -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <!-- Error alert -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <!-- Error -->
         <div
           v-if="errorMessage"
-          class="mb-5 flex items-start gap-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3"
+          class="mb-4 flex items-start gap-2.5 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700"
         >
-          <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path
               fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -34,60 +43,57 @@
           {{ errorMessage }}
         </div>
 
-        <form @submit.prevent="handleLogin" novalidate class="space-y-5">
+        <form @submit.prevent="handleLogin" novalidate class="space-y-4">
           <!-- Username -->
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700 mb-1.5">
-              Username
-            </label>
+            <label for="username" class="mb-1.5 block text-sm font-medium text-slate-700"
+              >Username</label
+            >
             <input
               id="username"
               v-model="form.username"
               type="text"
               autocomplete="username"
-              placeholder="Enter your username"
-              :class="[
-                'w-full px-3.5 py-2.5 text-sm rounded-xl border outline-none transition-all duration-150',
-                'placeholder:text-gray-300 text-gray-900',
+              placeholder="your.username"
+              :class="
                 fieldError.username
-                  ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
-                  : 'border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100',
-              ]"
+                  ? 'border-rose-300 bg-rose-50 focus:ring-rose-200'
+                  : 'border-slate-200 focus:ring-slate-200'
+              "
+              class="w-full rounded-2xl border bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-300 outline-none focus:ring-2 transition"
             />
-            <p v-if="fieldError.username" class="mt-1.5 text-xs text-red-500">
+            <p v-if="fieldError.username" class="mt-1 text-xs text-rose-500">
               {{ fieldError.username }}
             </p>
           </div>
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
-              Password
-            </label>
+            <label for="password" class="mb-1.5 block text-sm font-medium text-slate-700"
+              >Password</label
+            >
             <div class="relative">
               <input
                 id="password"
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
-                placeholder="Enter your password"
-                :class="[
-                  'w-full px-3.5 py-2.5 pr-10 text-sm rounded-xl border outline-none transition-all duration-150',
-                  'placeholder:text-gray-300 text-gray-900',
+                placeholder="••••••••"
+                :class="
                   fieldError.password
-                    ? 'border-red-300 bg-red-50 focus:border-red-400 focus:ring-2 focus:ring-red-100'
-                    : 'border-gray-200 bg-white focus:border-gray-400 focus:ring-2 focus:ring-gray-100',
-                ]"
+                    ? 'border-rose-300 bg-rose-50 focus:ring-rose-200'
+                    : 'border-slate-200 focus:ring-slate-200'
+                "
+                class="w-full rounded-2xl border bg-white px-3 py-2 pr-10 text-sm text-slate-900 placeholder-slate-300 outline-none focus:ring-2 transition"
               />
               <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
               >
-                <!-- Eye open -->
                 <svg
                   v-if="!showPassword"
-                  class="w-4 h-4"
+                  class="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -105,8 +111,7 @@
                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                   />
                 </svg>
-                <!-- Eye closed -->
-                <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg v-else class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
@@ -116,7 +121,7 @@
                 </svg>
               </button>
             </div>
-            <p v-if="fieldError.password" class="mt-1.5 text-xs text-red-500">
+            <p v-if="fieldError.password" class="mt-1 text-xs text-rose-500">
               {{ fieldError.password }}
             </p>
           </div>
@@ -125,11 +130,11 @@
           <button
             type="submit"
             :disabled="authStore.loading"
-            class="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-xl transition-colors duration-150 flex items-center justify-center gap-2 mt-2"
+            class="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg
               v-if="authStore.loading"
-              class="animate-spin w-4 h-4"
+              class="h-4 w-4 animate-spin"
               fill="none"
               viewBox="0 0 24 24"
             >
@@ -152,7 +157,7 @@
         </form>
       </div>
 
-      <p class="text-center text-xs text-gray-400 mt-6">
+      <p class="mt-6 text-center text-xs text-slate-400">
         ERP System &copy; {{ new Date().getFullYear() }}
       </p>
     </div>
@@ -169,22 +174,13 @@ const authStore = useAuthStore()
 
 const showPassword = ref(false)
 const errorMessage = ref('')
-
-const form = reactive({
-  username: '',
-  password: '',
-})
-
-const fieldError = reactive({
-  username: '',
-  password: '',
-})
+const form = reactive({ username: '', password: '' })
+const fieldError = reactive({ username: '', password: '' })
 
 function validate(): boolean {
   fieldError.username = ''
   fieldError.password = ''
   let valid = true
-
   if (!form.username.trim()) {
     fieldError.username = 'Username is required'
     valid = false
@@ -196,14 +192,12 @@ function validate(): boolean {
     fieldError.password = 'Password must be at least 6 characters'
     valid = false
   }
-
   return valid
 }
 
 async function handleLogin() {
   errorMessage.value = ''
   if (!validate()) return
-
   try {
     await authStore.login({ username: form.username, password: form.password })
     router.push({ name: 'dashboard' })
