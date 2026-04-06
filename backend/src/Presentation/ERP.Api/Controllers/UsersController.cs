@@ -128,7 +128,7 @@ public class UsersController : ControllerBase
             return Unauthorized(new { message = ex.Message });
         }
     }
-
+    [AllowAnonymous]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequestDto request, CancellationToken ct)
     {

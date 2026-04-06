@@ -13,7 +13,13 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.roles.includes('Admin') ?? false)
 
-  function setSession(data: { token: string; refreshToken: string; username: string; email: string; roles: string[] }) {
+  function setSession(data: {
+    token: string
+    refreshToken: string
+    username: string
+    email: string
+    roles: string[]
+  }) {
     token.value = data.token
     refreshToken.value = data.refreshToken
     user.value = { username: data.username, email: data.email, roles: data.roles }
@@ -54,7 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function refresh() {
     if (!refreshToken.value) throw new Error('No refresh token')
-    const res = await authService.refresh({ refreshToken: refreshToken.value })
+    if (!token.value) throw new Error('No access token')
+    const res = await authService.refresh({
+      refreshToken: refreshToken.value,
+      accessToken: token.value,
+    })
     setSession(res)
   }
 

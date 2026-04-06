@@ -90,7 +90,7 @@ public class InventoryService : IInventoryService
 
         product.Name = dto.Name;
         product.Description = dto.Description;
-        product.Price = dto.Price;
+        product.BasePrice = dto.BasePrice;
         product.CategoryId = dto.CategoryId;
         product.LastModifiedAt = DateTime.UtcNow;
 
@@ -202,6 +202,7 @@ public class InventoryService : IInventoryService
         Id = p.Id,
         Name = p.Name,
         SKU = p.SKU,
+        Price = p.Price,
         ImageUrl = p.ImageUrl,
         Description = p.Description,
         BasePrice = p.BasePrice,

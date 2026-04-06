@@ -12,11 +12,10 @@ public class UpdateProductDto
     public string? Description { get; set; }
 
     [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
-    public decimal Price { get; set; }
+    public decimal BasePrice { get; set; }
 
     [Required(ErrorMessage = "Category is required")]
     public Guid CategoryId { get; set; }
 
-    // เรามักไม่แก้ SKU ที่นี่ เพราะ SKU ควรจะคงที่ 
-    // ถ้าจะแก้สต็อก ให้ไปใช้ UpdateProductStockDto แทนครับ
+
 }

@@ -20,8 +20,12 @@ const router = createRouter({
       component: () => import('@/views/DashboardView.vue'),
       meta: { requiresAuth: true },
     },
-    // จะเพิ่ม routes ต่อไปที่นี่
-    // { path: '/inventory', name: 'inventory', component: ... }
+    {
+      path: '/inventory',
+      name: 'inventory',
+      component: () => import('@/views/InventoryView.vue'),
+      meta: { requiresAuth: true },
+    },
     // { path: '/sales',     name: 'sales',     component: ... }
     // { path: '/purchasing',name: 'purchasing', component: ... }
     // { path: '/finance',   name: 'finance',   component: ... }

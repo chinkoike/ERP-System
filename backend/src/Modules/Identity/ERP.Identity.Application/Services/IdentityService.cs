@@ -89,25 +89,24 @@ public class IdentityService : IIdentityService
     }
     public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request, CancellationToken ct)
     {
-        // 1. แกะข้อมูลจาก Token ที่หมดอายุ (Expired Access Token)
         var principal = _tokenService.GetPrincipalFromExpiredToken(request.AccessToken);
         var username = principal.Identity?.Name;
 
         var user = await _userRepository.GetByUsernameAsync(username ?? string.Empty, ct);
 
-        // 3. ตรวจสอบว่า Refresh Token ใน DB ตรงกับที่ส่งมาไหม และยังไม่หมดอายุใช่ไหม
         if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
         {
             throw new UnauthorizedException("Invalid refresh token attempt");
         }
 
-        // 4. สร้าง Token ชุดใหม่ (Rotation)
+        //  สร้าง Token ชุดใหม่ (Rotation)
         var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
         var newAccessToken = _tokenService.GenerateToken(MapToUserDto(user), roles);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-        // 5. บันทึก Refresh Token ใหม่ลง DB
+        //  บันทึก Refresh Token ใหม่ลง DB พร้อมอายุใหม่
         user.RefreshToken = newRefreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         await _userRepository.UpdateAsync(user, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 

@@ -30,18 +30,23 @@ function processQueue(error: unknown, token: string | null) {
   })
   failedQueue = []
 }
-
+const SKIP_INTERCEPTOR_URLS = ['/api/users/login', '/api/users/refresh-token', '/api/users/logout']
 // ดักจับ 401 แล้ว refresh token อัตโนมัติ
 http.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
-
-    // ถ้าไม่ใช่ 401 หรือเป็น retry แล้ว →던던던 error ออกไปเลย
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    const url = originalRequest?.url ?? ''
+    if (SKIP_INTERCEPTOR_URLS.some((u) => url.includes(u))) {
       return Promise.reject(error)
     }
-
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      originalRequest.url?.includes('/refresh-token') // <-- เพิ่มเงื่อนไขนี้
+    ) {
+      return Promise.reject(error)
+    }
     // ถ้ากำลัง refresh อยู่ → เข้า queue รอ
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
