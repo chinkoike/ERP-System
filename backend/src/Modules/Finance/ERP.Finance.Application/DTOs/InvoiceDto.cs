@@ -7,6 +7,7 @@ public class InvoiceDto
     public Guid CustomerId { get; set; }
     public Guid SupplierId { get; set; }
     public Guid? PurchaseOrderId { get; set; }
+    public decimal TotalAmount { get; set; }
     public string? Description { get; set; }
     public decimal AmountDue { get; set; }
     public DateTime InvoiceDate { get; set; }

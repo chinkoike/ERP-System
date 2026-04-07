@@ -30,7 +30,11 @@ public class FinanceDbContext : DbContext
         .Property(a => a.Balance)
         .HasPrecision(18, 2);
 
-        // สำหรับตาราง Invoice (AmountDue)
+        // สำหรับตาราง Invoice (TotalAmount และ AmountDue)
+        modelBuilder.Entity<Invoice>()
+            .Property(i => i.TotalAmount)
+            .HasPrecision(18, 2);
+
         modelBuilder.Entity<Invoice>()
             .Property(i => i.AmountDue)
             .HasPrecision(18, 2);

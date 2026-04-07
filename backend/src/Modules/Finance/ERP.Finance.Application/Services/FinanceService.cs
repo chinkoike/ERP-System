@@ -56,19 +56,29 @@ public class FinanceService : IFinanceService
             throw new BadRequestException("Invoice must be linked to either a Supplier or a Customer.");
         }
 
-        // 2. ป้องกันยอดเงินเป็น 0 หรือติดลบ (ถ้า DTO ไม่ได้เช็กไว้)
+        // 2. ป้องกันยอดรวมและยอดค้างชำระเป็น 0 หรือติดลบ
+        if (dto.TotalAmount <= 0)
+        {
+            throw new BadRequestException("Invoice total amount must be greater than zero.");
+        }
+
         if (dto.AmountDue <= 0)
         {
-            throw new BadRequestException("Invoice amount must be greater than zero.");
+            throw new BadRequestException("Invoice amount due must be greater than zero.");
+        }
+
+        if (dto.AmountDue > dto.TotalAmount)
+        {
+            throw new BadRequestException("ยอดค้างชำระต้องไม่เกินยอดรวม");
         }
 
         var invoice = new Invoice
         {
             InvoiceNumber = dto.InvoiceNumber,
-
             SupplierId = dto.SupplierId,
             CustomerId = dto.CustomerId,
             PurchaseOrderId = dto.PurchaseOrderId,
+            TotalAmount = dto.TotalAmount,
             AmountDue = dto.AmountDue,
             InvoiceDate = dto.InvoiceDate == default ? DateTime.UtcNow : dto.InvoiceDate,
             DueDate = dto.DueDate,
@@ -94,9 +104,20 @@ public class FinanceService : IFinanceService
         {
             throw new BadRequestException("ไม่สามารถแก้ไข Invoice ที่ชำระเงินเสร็จสิ้นแล้วได้");
         }
-        if (dto.AmountDue > 0)
+        if (dto.TotalAmount.HasValue)
         {
-            invoice.AmountDue = dto.AmountDue;
+            if (dto.TotalAmount.Value < invoice.AmountDue)
+            {
+                throw new BadRequestException("ยอดรวมต้องไม่น้อยกว่ายอดค้างชำระ");
+            }
+            if (dto.TotalAmount.Value > 0)
+            {
+                invoice.TotalAmount = dto.TotalAmount.Value;
+            }
+        }
+        if (dto.AmountDue.HasValue && dto.AmountDue.Value > 0)
+        {
+            invoice.AmountDue = dto.AmountDue.Value;
         }
         if (dto.DueDate != default)
         {
@@ -150,8 +171,26 @@ public class FinanceService : IFinanceService
 
     public async Task<Guid> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken cancellationToken = default)
     {
+        if (dto.AmountPaid <= 0)
+        {
+            throw new BadRequestException("จำนวนเงินที่ชำระต้องมากกว่า 0");
+        }
+
         var invoice = await _invoiceRepository.GetByIdAsync(dto.InvoiceId, cancellationToken);
         if (invoice == null) throw new NotFoundException("Invoice not found");
+
+        if (dto.AmountPaid > invoice.AmountDue)
+        {
+            throw new BadRequestException("จำนวนเงินที่ชำระเกินยอดค้างชำระ");
+        }
+
+        var account = await _accountRepository.GetByIdAsync(dto.AccountId, cancellationToken);
+        if (account == null) throw new NotFoundException("Account not found");
+
+        if (account.Balance < dto.AmountPaid)
+        {
+            throw new BadRequestException("ยอดเงินในบัญชีไม่เพียงพอ");
+        }
 
         var payment = new Payment
         {
@@ -168,9 +207,16 @@ public class FinanceService : IFinanceService
         await _paymentRepository.AddAsync(payment, cancellationToken);
 
         invoice.AmountDue -= dto.AmountPaid;
-        if (invoice.AmountDue <= 0) invoice.Status = InvoiceStatus.Paid;
+        invoice.AmountDue = Math.Max(0, invoice.AmountDue);
+        if (invoice.AmountDue <= 0)
+        {
+            invoice.Status = InvoiceStatus.Paid;
+        }
 
         _invoiceRepository.Update(invoice);
+
+        account.Balance -= dto.AmountPaid;
+        _accountRepository.Update(account);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return payment.Id;
@@ -213,6 +259,7 @@ public class FinanceService : IFinanceService
         CustomerId = invoice.CustomerId ?? Guid.Empty,
         SupplierId = invoice.SupplierId ?? Guid.Empty,
         PurchaseOrderId = invoice.PurchaseOrderId,
+        TotalAmount = invoice.TotalAmount,
         Description = invoice.Description,
         AmountDue = invoice.AmountDue,
         InvoiceDate = invoice.InvoiceDate,

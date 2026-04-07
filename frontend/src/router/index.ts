@@ -38,7 +38,12 @@ const router = createRouter({
       component: () => import('@/views/PurchasingView.vue'),
       meta: { requiresAuth: true },
     },
-    // { path: '/finance',   name: 'finance',   component: ... }
+    {
+      path: '/finance',
+      name: 'finance',
+      component: () => import('@/views/FinanceView.vue'),
+      meta: { requiresAuth: true },
+    },
     // { path: '/report',    name: 'report',    component: ... }
     // { path: '/users',     name: 'users',     component: ... }
   ],

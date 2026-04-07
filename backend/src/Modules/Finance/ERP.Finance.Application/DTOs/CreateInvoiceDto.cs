@@ -13,6 +13,9 @@ public class CreateInvoiceDto
     [StringLength(500)]
     public string? Description { get; set; }
 
+    [Range(0.01, double.MaxValue, ErrorMessage = "Total amount must be greater than 0")]
+    public decimal TotalAmount { get; set; }
+
     [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
     public decimal AmountDue { get; set; }
 
