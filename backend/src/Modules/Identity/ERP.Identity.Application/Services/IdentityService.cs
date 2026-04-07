@@ -64,19 +64,23 @@ public class IdentityService : IIdentityService
 
         var rolesList = roles.Select(r => r.Name).ToList();
 
-        // 5. สร้าง Access Token และ Refresh Token
+        // 5. อัปเดตเวลา Login ล่าสุด
+        user.LastLoginAt = DateTime.UtcNow;
+
+        // 6. สร้าง Access Token และ Refresh Token
         var userDto = MapToUserDto(user);
+        userDto.Roles = rolesList;
         var accessToken = _tokenService.GenerateToken(userDto, rolesList);
         var refreshToken = _tokenService.GenerateRefreshToken(); // เรียกใช้ตัวที่เราเพิ่มใหม่ใน TokenService
 
-        // 6. อัปเดต Refresh Token ลงใน User Entity (Database)
+        // 7. อัปเดต Refresh Token และเวลา Login ล่าสุดลงใน User Entity (Database)
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // ตั้งอายุไว้ 7 วัน (หรือตาม JwtSettings)
 
         await _userRepository.UpdateAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 7. ส่งข้อมูลกลับ
+        // 8. ส่งข้อมูลกลับ
         return new AuthResponseDto
         {
             IsSuccess = true,
@@ -101,7 +105,9 @@ public class IdentityService : IIdentityService
 
         //  สร้าง Token ชุดใหม่ (Rotation)
         var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-        var newAccessToken = _tokenService.GenerateToken(MapToUserDto(user), roles);
+        var userDto = MapToUserDto(user);
+        userDto.Roles = roles;
+        var newAccessToken = _tokenService.GenerateToken(userDto, roles);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
 
         //  บันทึก Refresh Token ใหม่ลง DB พร้อมอายุใหม่
@@ -114,7 +120,9 @@ public class IdentityService : IIdentityService
         {
             IsSuccess = true,
             Token = newAccessToken,
-            RefreshToken = newRefreshToken
+            RefreshToken = newRefreshToken,
+            User = userDto,
+            Roles = roles
         };
     }
 
@@ -135,7 +143,12 @@ public class IdentityService : IIdentityService
 
     public async Task<UserDto?> GetUserByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        var user = await _userRepository.GetQueryable()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+
         return user == null ? null : MapToUserDto(user);
     }
 
@@ -153,13 +166,24 @@ public class IdentityService : IIdentityService
 
     public async Task<IEnumerable<UserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _userRepository.GetAllAsync(cancellationToken);
+        var users = await _userRepository.GetQueryable()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
         return users.Select(MapToUserDto);
     }
 
     public async Task<IEnumerable<UserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
     {
-        var users = await _userRepository.GetActiveUsersAsync(cancellationToken);
+        var users = await _userRepository.GetQueryable()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Where(u => u.IsActive)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
         return users.Select(MapToUserDto);
     }
 
@@ -278,6 +302,8 @@ public class IdentityService : IIdentityService
         if (user == null) return false;
 
         user.Email = dto.Email;
+        user.JobTitle = dto.JobTitle;
+        user.Department = dto.Department;
         user.IsActive = dto.IsActive;
         user.FirstName = dto.FirstName;
         user.LastName = dto.LastName;
@@ -469,12 +495,18 @@ public class IdentityService : IIdentityService
         Id = u.Id,
         Username = u.Username,
         Email = u.Email,
+        FirstName = u.FirstName,
+        LastName = u.LastName,
+        FullName = u.FullName,
+        JobTitle = u.JobTitle,
+        Department = u.Department,
         IsActive = u.IsActive,
+        LastLoginAt = u.LastLoginAt,
         Roles = u.UserRoles?
-    .Select(ur => ur.Role?.Name)
-    .Where(name => name != null)
-    .Cast<string>()
-    .ToList() ?? new List<string>(),
+            .Select(ur => ur.Role?.Name)
+            .Where(name => name != null)
+            .Cast<string>()
+            .ToList() ?? new List<string>(),
         CreatedAt = u.CreatedAt,
         CreatedBy = u.CreatedBy ?? "System",
         UpdatedAt = u.LastModifiedAt,

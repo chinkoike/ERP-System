@@ -1,31 +1,36 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authService } from '@/services/authService'
-import type { User, LoginRequest } from '@/types/auth'
+import type { AuthResponse, AuthUser, LoginRequest } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const refreshToken = ref<string | null>(localStorage.getItem('refreshToken'))
-  const user = ref<User | null>(JSON.parse(localStorage.getItem('user') ?? 'null'))
+  const user = ref<AuthUser | null>(JSON.parse(localStorage.getItem('user') ?? 'null'))
   const loading = ref(false)
   const error = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.roles.includes('Admin') ?? false)
 
-  function setSession(data: {
-    token: string
-    refreshToken: string
-    username: string
-    email: string
-    roles: string[]
-  }) {
+  function setSession(
+    data: AuthResponse & { username?: string; email?: string; roles?: string[] },
+  ) {
     token.value = data.token
     refreshToken.value = data.refreshToken
-    user.value = { username: data.username, email: data.email, roles: data.roles }
+
+    if (data.user) {
+      user.value = data.user
+    } else if (data.username && data.email && data.roles) {
+      user.value = { username: data.username, email: data.email, roles: data.roles }
+    }
+
+    if (user.value) {
+      localStorage.setItem('user', JSON.stringify(user.value))
+    }
+
     localStorage.setItem('token', data.token)
     localStorage.setItem('refreshToken', data.refreshToken)
-    localStorage.setItem('user', JSON.stringify(user.value))
   }
 
   function clearSession() {

@@ -16,8 +16,11 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         if (string.IsNullOrWhiteSpace(username))
             throw new ArgumentException("Username cannot be null or empty", nameof(username));
 
-        var users = await FindAsync(u => u.Username == username, cancellationToken);
-        return users.FirstOrDefault();
+        return await DbContext.Set<User>()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
     }
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -25,13 +28,21 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email cannot be null or empty", nameof(email));
 
-        var users = await FindAsync(u => u.Email == email, cancellationToken);
-        return users.FirstOrDefault();
+        return await DbContext.Set<User>()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
 
     public async Task<IEnumerable<User>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
     {
-        return await FindAsync(u => u.IsActive, cancellationToken);
+        return await DbContext.Set<User>()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .Where(u => u.IsActive)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
@@ -55,7 +66,10 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         if (string.IsNullOrWhiteSpace(refreshToken))
             throw new ArgumentException("Refresh token cannot be null or empty", nameof(refreshToken));
 
-        var users = await FindAsync(u => u.RefreshToken == refreshToken, cancellationToken);
-        return users.FirstOrDefault();
+        return await DbContext.Set<User>()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken, cancellationToken);
     }
 }
