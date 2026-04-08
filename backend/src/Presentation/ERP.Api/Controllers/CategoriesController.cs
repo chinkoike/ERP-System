@@ -32,6 +32,7 @@ public class CategoriesController : ControllerBase
     }
 
     // แนะนำให้ใช้ CreateCategoryDto แทน CategoryDto เพื่อความปลอดภัย
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto, CancellationToken ct)
     {
@@ -45,6 +46,7 @@ public class CategoriesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = categoryId }, new { id = categoryId, name = dto.Name });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryDto dto, CancellationToken ct)
     {
@@ -55,6 +57,7 @@ public class CategoriesController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {

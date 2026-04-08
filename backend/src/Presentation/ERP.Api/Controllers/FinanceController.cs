@@ -39,6 +39,7 @@ public class FinanceController : ControllerBase
         return CreatedAtAction(nameof(GetInvoiceById), new { id = id }, new { id = id });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPatch("invoices/{id}/pay")]
     public async Task<ActionResult> SetInvoicePaid(Guid id, CancellationToken ct)
     {
@@ -46,6 +47,7 @@ public class FinanceController : ControllerBase
         if (!result) return NotFound();
         return NoContent();
     }
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPut("invoices/{id}")]
     public async Task<ActionResult> UpdateInvoice(Guid id, [FromBody] UpdateInvoiceDto dto, CancellationToken ct)
     {
@@ -69,6 +71,7 @@ public class FinanceController : ControllerBase
         return CreatedAtAction(nameof(GetPaymentsByInvoiceId), new { invoiceId = dto.InvoiceId }, new { id = id });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpGet("accounts")]
     public async Task<ActionResult<IEnumerable<AccountDto>>> GetAccounts(CancellationToken ct)
     {
@@ -76,6 +79,7 @@ public class FinanceController : ControllerBase
         return Ok(accounts);
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPost("accounts")]
     public async Task<ActionResult> CreateAccount([FromBody] CreateAccountDto dto, CancellationToken ct)
     {

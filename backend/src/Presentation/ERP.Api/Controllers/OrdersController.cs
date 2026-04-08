@@ -57,6 +57,7 @@ public class OrdersController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] OrderStatus newStatus, CancellationToken ct)
     {
@@ -79,7 +80,7 @@ public class OrdersController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Manager")]
     [HttpGet("total-sales")]
     public async Task<IActionResult> GetTotalSales([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, CancellationToken ct)
     {

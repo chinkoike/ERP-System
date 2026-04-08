@@ -62,6 +62,7 @@ public class CustomersController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {

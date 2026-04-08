@@ -23,36 +23,43 @@ const router = createRouter({
           path: 'dashboard',
           name: 'dashboard',
           component: () => import('@/views/DashboardView.vue'),
+          meta: { roles: ['Admin', 'Manager'] },
         },
         {
           path: 'inventory',
           name: 'inventory',
           component: () => import('@/views/InventoryView.vue'),
+          meta: { roles: ['Admin', 'Manager', 'User'] },
         },
         {
           path: 'sales',
           name: 'sales',
           component: () => import('@/views/SalesView.vue'),
+          meta: { roles: ['Admin', 'Manager', 'User'] },
         },
         {
           path: 'purchasing',
           name: 'purchasing',
           component: () => import('@/views/PurchasingView.vue'),
+          meta: { roles: ['Admin', 'Manager', 'User'] },
         },
         {
           path: 'finance',
           name: 'finance',
           component: () => import('@/views/FinanceView.vue'),
+          meta: { roles: ['Admin', 'Manager'] },
         },
         {
           path: 'report',
           name: 'report',
           component: () => import('@/views/ReportView.vue'),
+          meta: { roles: ['Admin', 'Manager'] },
         },
         {
           path: 'users',
           name: 'users',
           component: () => import('@/views/UsersView.vue'),
+          meta: { roles: ['Admin', 'Manager'] },
         },
       ],
     },
@@ -68,6 +75,11 @@ router.beforeEach((to) => {
   }
   if (to.name === 'login' && authStore.isAuthenticated) {
     return { name: 'dashboard' }
+  }
+
+  const allowedRoles = to.meta.roles as string[] | undefined
+  if (allowedRoles && allowedRoles.length > 0 && !authStore.hasAnyRole(allowedRoles)) {
+    return { name: authStore.hasAnyRole(['Admin', 'Manager', 'User']) ? 'inventory' : 'login' }
   }
 })
 

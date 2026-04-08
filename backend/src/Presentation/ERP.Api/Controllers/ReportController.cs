@@ -4,7 +4,7 @@ using ERP.Report.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Admin,Manager")]
 [ApiController]
 [Route("api/[controller]")]
 public class ReportController : ControllerBase

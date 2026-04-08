@@ -53,6 +53,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto, CancellationToken ct)
     {
@@ -64,6 +65,7 @@ public class ProductsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = productId }, new { id = productId, dto.Name, dto.SKU });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto, CancellationToken ct)
     {
@@ -74,6 +76,7 @@ public class ProductsController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
@@ -84,6 +87,7 @@ public class ProductsController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPatch("{id}/stock")]
     public async Task<IActionResult> UpdateStock(Guid id, [FromBody] UpdateProductStockDto dto, CancellationToken ct)
     {

@@ -12,6 +12,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => user.value?.roles.includes('Admin') ?? false)
+  const isManager = computed(() => user.value?.roles.includes('Manager') ?? false)
+  const isUser = computed(() => user.value?.roles.includes('User') ?? false)
+  const hasRole = (role: string) => user.value?.roles.includes(role) ?? false
+  const hasAnyRole = (roles: string[]) => roles.some((role) => hasRole(role))
 
   function setSession(
     data: AuthResponse & { username?: string; email?: string; roles?: string[] },
@@ -73,5 +77,19 @@ export const useAuthStore = defineStore('auth', () => {
     setSession(res)
   }
 
-  return { token, user, loading, error, isAuthenticated, isAdmin, login, logout, refresh }
+  return {
+    token,
+    user,
+    loading,
+    error,
+    isAuthenticated,
+    isAdmin,
+    isManager,
+    isUser,
+    hasRole,
+    hasAnyRole,
+    login,
+    logout,
+    refresh,
+  }
 })

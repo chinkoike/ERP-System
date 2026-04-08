@@ -42,6 +42,7 @@ public class UsersController : ControllerBase
         return Ok(users);
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpGet("active")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetActive(CancellationToken ct)
     {
@@ -49,6 +50,7 @@ public class UsersController : ControllerBase
         return Ok(users);
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserDto dto, CancellationToken ct)
     {
@@ -59,6 +61,7 @@ public class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = userId }, new { id = userId, dto.Username });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto, CancellationToken ct)
     {

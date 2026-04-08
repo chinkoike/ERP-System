@@ -31,6 +31,7 @@ public class PurchasingController : ControllerBase
         return Ok(supplier);
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPost("suppliers")]
     public async Task<IActionResult> CreateSupplier([FromBody] CreateSupplierDto dto, CancellationToken ct = default)
     {
@@ -38,6 +39,7 @@ public class PurchasingController : ControllerBase
         return CreatedAtAction(nameof(GetSupplier), new { id }, new { id });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPut("suppliers/{id}")]
     public async Task<IActionResult> UpdateSupplier(Guid id, [FromBody] UpdateSupplierDto dto, CancellationToken ct = default)
     {
@@ -46,6 +48,7 @@ public class PurchasingController : ControllerBase
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpDelete("suppliers/{id}")]
     public async Task<IActionResult> DeleteSupplier(Guid id, CancellationToken ct = default)
     {
@@ -76,6 +79,7 @@ public class PurchasingController : ControllerBase
         return CreatedAtAction(nameof(GetPurchaseOrder), new { id }, new { id });
     }
 
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPost("purchase-orders/{id}/receive")]
     public async Task<IActionResult> ReceivePurchaseOrder(Guid id, [FromBody] List<PurchaseOrderItemDto> items, CancellationToken ct = default)
     {
@@ -83,6 +87,7 @@ public class PurchasingController : ControllerBase
         if (!ok) return BadRequest();
         return NoContent();
     }
+    [Authorize(Roles = "Admin,Manager")]
     [HttpPatch("purchase-orders/{id}/cancel")]
     public async Task<IActionResult> CancelPurchaseOrder(Guid id, CancellationToken ct = default)
     {
