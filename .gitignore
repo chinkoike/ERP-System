@@ -4,6 +4,9 @@
 ## Get latest from `dotnet new gitignore`
 # [CUSTOM SETTINGS FOR ERP_SYSTEM]
 # ---------------------------------
+#Unit Test Results
+.trx
+TestResults/
 # Ignore Repomix outputs
 repomix-output.xml
 repomix-output.txt
