@@ -1,42 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50">
     <!-- Top bar -->
-    <header class="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900">
-          <svg
-            width="12"
-            height="12"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="white"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
-            />
-          </svg>
-        </div>
-        <span class="text-sm font-medium text-slate-900">ERP System</span>
-        <span class="text-sm text-slate-300 mx-1">/</span>
-        <span class="text-sm text-slate-500">Users</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <div
-          class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 border border-slate-200"
-        >
-          <span class="text-[11px] font-semibold text-slate-600">{{ userInitial }}</span>
-        </div>
-        <button
-          @click="handleLogout"
-          class="text-sm text-slate-500 hover:text-slate-700 transition"
-        >
-          Sign out
-        </button>
-      </div>
-    </header>
 
     <main class="px-8 py-8 max-w-7xl mx-auto">
       <!-- Heading -->
@@ -184,7 +148,7 @@
                     <div class="flex items-center gap-3">
                       <!-- Avatar -->
                       <div
-                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-200"
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200"
                       >
                         <span class="text-xs font-semibold text-slate-600">{{
                           u.fullName?.charAt(0) ?? u.username.charAt(0).toUpperCase()
@@ -557,16 +521,10 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import { useIdentityStore } from '@/stores/identityStore'
 import type { User, Role } from '@/types/identity'
 
-const router = useRouter()
-const authStore = useAuthStore()
 const store = useIdentityStore()
-
-const userInitial = computed(() => authStore.user?.username?.charAt(0).toUpperCase() ?? 'U')
 
 const activeTab = ref<'users' | 'roles'>('users')
 const tabs = [
@@ -758,11 +716,6 @@ function formatDate(d: string) {
     month: 'short',
     year: 'numeric',
   })
-}
-
-async function handleLogout() {
-  await authStore.logout()
-  router.push({ name: 'login' })
 }
 
 onMounted(async () => {

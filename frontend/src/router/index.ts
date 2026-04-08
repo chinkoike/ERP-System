@@ -4,61 +4,62 @@ import { useAuthStore } from '@/stores/authStore'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // ─── Public (no layout) ───
     {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
       meta: { requiresAuth: false },
     },
+
+    // ─── Authenticated (AppLayout) ───
     {
       path: '/',
+      component: () => import('@/layouts/AppLayout.vue'),
+      meta: { requiresAuth: true },
       redirect: '/dashboard',
-    },
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: () => import('@/views/DashboardView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/inventory',
-      name: 'inventory',
-      component: () => import('@/views/InventoryView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/sales',
-      name: 'sales',
-      component: () => import('@/views/SalesView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/purchasing',
-      name: 'purchasing',
-      component: () => import('@/views/PurchasingView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/finance',
-      name: 'finance',
-      component: () => import('@/views/FinanceView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/report',
-      name: 'report',
-      component: () => import('@/views/ReportView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/users',
-      name: 'users',
-      component: () => import('@/views/UsersView.vue'),
-      meta: { requiresAuth: true },
+      children: [
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('@/views/DashboardView.vue'),
+        },
+        {
+          path: 'inventory',
+          name: 'inventory',
+          component: () => import('@/views/InventoryView.vue'),
+        },
+        {
+          path: 'sales',
+          name: 'sales',
+          component: () => import('@/views/SalesView.vue'),
+        },
+        {
+          path: 'purchasing',
+          name: 'purchasing',
+          component: () => import('@/views/PurchasingView.vue'),
+        },
+        {
+          path: 'finance',
+          name: 'finance',
+          component: () => import('@/views/FinanceView.vue'),
+        },
+        {
+          path: 'report',
+          name: 'report',
+          component: () => import('@/views/ReportView.vue'),
+        },
+        {
+          path: 'users',
+          name: 'users',
+          component: () => import('@/views/UsersView.vue'),
+        },
+      ],
     },
   ],
 })
 
+// Auth guard
 router.beforeEach((to) => {
   const authStore = useAuthStore()
 

@@ -1,36 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50 font-sans">
     <!-- Top bar -->
-    <header class="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
-          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"
-            />
-          </svg>
-        </div>
-        <span class="text-sm font-medium text-slate-900">ERP System</span>
-        <span class="text-sm text-slate-300">/</span>
-        <span class="text-sm text-slate-500">Inventory</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <div
-          class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center"
-        >
-          <span class="text-xs font-semibold text-slate-600">{{ userInitial }}</span>
-        </div>
-        <button
-          @click="handleLogout"
-          class="text-sm text-slate-500 hover:text-slate-700 transition"
-        >
-          Sign out
-        </button>
-      </div>
-    </header>
 
     <main class="px-8 py-8 max-w-7xl mx-auto">
       <!-- Page heading -->
@@ -565,16 +535,11 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
 import type { Product, Category } from '@/types/inventory'
 
-const router = useRouter()
-const authStore = useAuthStore()
 const store = useInventoryStore()
 
-const userInitial = computed(() => authStore.user?.username?.charAt(0).toUpperCase() ?? 'U')
 const activeTab = ref<'products' | 'categories'>('products')
 const tabs = [
   { key: 'products', label: 'สินค้า' },
@@ -785,11 +750,6 @@ function stockStatusClass(stock: number) {
   if (stock <= 10)
     return 'inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700'
   return 'inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700'
-}
-
-async function handleLogout() {
-  await authStore.logout()
-  router.push({ name: 'login' })
 }
 
 onMounted(async () => {
