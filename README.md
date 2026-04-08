@@ -12,6 +12,7 @@ A full-stack Enterprise Resource Planning (ERP) web application built with **ASP
 - **Purchasing** — manage suppliers, create and approve purchase orders
 - **Finance** — manage accounts, create invoices, record payments
 - **Report & Dashboard** — financial summary, sales overview, inventory status with chart data
+- **Quality Assurance** — 50+ unit tests covering core business logic using xUnit and Moq
 
 ---
 
@@ -123,6 +124,17 @@ npm run dev
 
 Frontend will be available at `http://localhost:5173`
 
+## Testing
+
+This project uses **xUnit** for unit testing and **Moq** for dependency mocking. The tests cover business logic in the Domain and Application layers across all modules.
+
+To run the tests, navigate to the backend directory and execute:
+
+```bash
+cd backend/ERP.Tests
+dotnet test
+```
+
 ---
 
 ## API Overview
@@ -144,25 +156,32 @@ All endpoints are documented via Swagger UI at `/swagger`. Authentication uses *
 ## Project Structure
 
 ```
+
 erp-system/
 ├── backend/
-│   └── src/
-│       ├── Modules/
-│       │   ├── Finance/
-│       │   ├── Identity/
-│       │   ├── Inventory/
-│       │   ├── Purchasing/
-│       │   ├── Report/
-│       │   └── Sales/
-│       ├── Presentation/
-│       │   └── ERP.Api/          ← entry point
-│       └── Shared/
-│           ├── ERP.Shared/
-│           └── ERP.Shared.Infrastructure/
+├──── tests/
+│ └── src/
+│ ├── Modules/
+│ │ ├── Finance/
+│ │ ├── Identity/
+│ │ ├── Inventory/
+│ │ ├── Purchasing/
+│ │ ├── Report/
+│ │ └── Sales/
+│ ├── Presentation/
+│ │ └── ERP.Api/ ← entry point
+│ └── Shared/
+│ ├── ERP.Shared/
+│ └── ERP.Shared.Infrastructure/
 └── frontend/
-    └── src/
-        ├── views/                ← page components
-        ├── stores/               ← Pinia state
-        ├── services/             ← API clients
-        └── types/                ← TypeScript interfaces
+└── src/
+├── views/ ← page components
+├── stores/ ← Pinia state
+├── services/ ← API clients
+└── types/ ← TypeScript interfaces
+
+```
+
+```
+
 ```
