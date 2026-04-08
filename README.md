@@ -6,6 +6,7 @@ A full-stack Enterprise Resource Planning (ERP) web application built with **ASP
 
 ## Features
 
+- **Identity & Access Control** — manage user accounts, assign roles (Admin, Manager, User), and handle secure authentication with JWT and Refresh Tokens
 - **Sales** — manage customers, create and track orders, update order status
 - **Inventory** — manage products and categories, track stock levels
 - **Purchasing** — manage suppliers, create and approve purchase orders
@@ -42,23 +43,25 @@ backend/src/Modules/{Module}/
 ## Tech Stack
 
 ### Backend
-| | |
-|---|---|
-| Runtime | .NET 9 / ASP.NET Core |
-| ORM | Entity Framework Core 9 |
-| Database | SQL Server |
-| Auth | JWT Bearer + Refresh Token |
-| API Docs | Swagger / OpenAPI |
+
+|          |                            |
+| -------- | -------------------------- |
+| Runtime  | .NET 9 / ASP.NET Core      |
+| ORM      | Entity Framework Core 9    |
+| Database | SQL Server                 |
+| Auth     | JWT Bearer + Refresh Token |
+| API Docs | Swagger / OpenAPI          |
 
 ### Frontend
-| | |
-|---|---|
-| Framework | Vue 3 (Composition API) |
-| Language | TypeScript |
-| State Management | Pinia |
-| Routing | Vue Router |
-| Styling | Tailwind CSS v4 |
-| HTTP Client | Axios |
+
+|                  |                         |
+| ---------------- | ----------------------- |
+| Framework        | Vue 3 (Composition API) |
+| Language         | TypeScript              |
+| State Management | Pinia                   |
+| Routing          | Vue Router              |
+| Styling          | Tailwind CSS v4         |
+| HTTP Client      | Axios                   |
 
 ---
 
@@ -73,7 +76,7 @@ backend/src/Modules/{Module}/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/erp-system.git
+git clone https://github.com/chinkoike/erp-system.git
 cd erp-system
 ```
 
@@ -126,15 +129,15 @@ Frontend will be available at `http://localhost:5173`
 
 All endpoints are documented via Swagger UI at `/swagger`. Authentication uses **JWT Bearer tokens**.
 
-| Module | Base Route |
-|---|---|
-| Identity | `/api/users`, `/api/roles` |
-| Sales | `/api/orders`, `/api/customers` |
-| Inventory | `/api/products`, `/api/categories` |
-| Purchasing | `/api/purchasing` |
-| Finance | `/api/finance` |
-| Report | `/api/report` |
-| Dashboard | `/api/dashboard` |
+| Module     | Base Route                         |
+| ---------- | ---------------------------------- |
+| Identity   | `/api/users`, `/api/roles`         |
+| Sales      | `/api/orders`, `/api/customers`    |
+| Inventory  | `/api/products`, `/api/categories` |
+| Purchasing | `/api/purchasing`                  |
+| Finance    | `/api/finance`                     |
+| Report     | `/api/report`                      |
+| Dashboard  | `/api/dashboard`                   |
 
 ---
 
