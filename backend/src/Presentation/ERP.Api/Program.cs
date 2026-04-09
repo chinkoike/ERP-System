@@ -220,7 +220,6 @@ builder.Services.AddScoped<IReportService>(sp =>
 
 // --- 6. Pipeline configuration ---
 var app = builder.Build();
-app.UseCors(myAllowPolicy);
 app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -228,7 +227,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseRouting();
+app.UseCors(myAllowPolicy);
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
