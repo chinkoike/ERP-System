@@ -37,12 +37,12 @@ using ERP.Shared.Infrastructure.Middleware;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
-const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+const string myAllowPolicy = "MyAllowSpecificOrigins";
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 // 2. ตั้งค่า CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("MyAllowSpecificOrigins",
+    options.AddPolicy("myAllowPolicy",
         policy =>
         {
             if (allowedOrigins != null && allowedOrigins.Length > 0)
@@ -50,8 +50,7 @@ builder.Services.AddCors(options =>
                 // ถ้ามีค่าใน Config ให้ใช้ค่านั้น
                 policy.WithOrigins(allowedOrigins)
                       .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials(); // ใส่เพิ่มถ้ามีการใช้ Cookie หรือ Auth Header
+                      .AllowAnyMethod();
             }
             else
             {
@@ -221,7 +220,7 @@ builder.Services.AddScoped<IReportService>(sp =>
 
 // --- 6. Pipeline configuration ---
 var app = builder.Build();
-app.UseCors(myAllowSpecificOrigins);
+app.UseCors(myAllowPolicy);
 app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
