@@ -38,17 +38,29 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 // 2. ตั้งค่า CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: myAllowSpecificOrigins,
-                      policy =>
-                      {
-                          policy.WithOrigins("http://localhost:5173") // พอร์ตของฝั่ง React/Vue
-                                .AllowAnyHeader()
-                                .AllowAnyMethod();
-                      });
+    options.AddPolicy("MyAllowSpecificOrigins",
+        policy =>
+        {
+            if (allowedOrigins != null && allowedOrigins.Length > 0)
+            {
+                // ถ้ามีค่าใน Config ให้ใช้ค่านั้น
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials(); // ใส่เพิ่มถ้ามีการใช้ Cookie หรือ Auth Header
+            }
+            else
+            {
+                // ถ้าไม่มีค่า (กันพลาด) ให้เปิดรับแค่ Localhost
+                policy.WithOrigins("http://localhost:5173")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            }
+        });
 });
 // 1. เพิ่ม Authentication & JWT Middleware
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
