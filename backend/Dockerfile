@@ -15,14 +15,14 @@ COPY ["src/Modules/Finance/ERP.Finance.Application/ERP.Finance.Application.cspro
 COPY ["src/Modules/Finance/ERP.Finance.Infrastructure/ERP.Finance.Infrastructure.csproj", "src/Modules/Finance/ERP.Finance.Infrastructure/"]
 COPY ["src/Modules/Report/ERP.Report.Application/ERP.Report.Application.csproj", "src/Modules/Report/ERP.Report.Application/"]
 COPY ["src/Modules/Report/ERP.Report.Infrastructure/ERP.Report.Infrastructure.csproj", "src/Modules/Report/ERP.Report.Infrastructure/"]
-COPY ["src/ERP.Api/ERP.Api.csproj", "src/ERP.Api/"]
+COPY ["src/Presentation/ERP.Api/ERP.Api.csproj", "src/Presentation/ERP.Api/"]
 
 # 2. รัน Restore เพื่อโหลด Library
-RUN dotnet restore "src/ERP.Api/ERP.Api.csproj"
+RUN dotnet restore "src/Presentation/ERP.Api/ERP.Api.csproj"
 
 # 3. Copy ไฟล์ที่เหลือทั้งหมดและ Build
 COPY . .
-WORKDIR "/src/src/ERP.Api"
+WORKDIR "/src/Presentation/ERP.Api"
 RUN dotnet build "ERP.Api.csproj" -c Release -o /app/build
 
 # 4. Publish เป็นไฟล์พร้อมรัน
