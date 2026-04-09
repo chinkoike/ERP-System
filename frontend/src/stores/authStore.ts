@@ -10,7 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => !!token.value && !!refreshToken.value)
   const isAdmin = computed(() => user.value?.roles.includes('Admin') ?? false)
   const isManager = computed(() => user.value?.roles.includes('Manager') ?? false)
   const isUser = computed(() => user.value?.roles.includes('User') ?? false)
@@ -20,6 +20,10 @@ export const useAuthStore = defineStore('auth', () => {
   function setSession(
     data: AuthResponse & { username?: string; email?: string; roles?: string[] },
   ) {
+    if (!data.token || !data.refreshToken) {
+      throw new Error('Invalid auth response from server.')
+    }
+
     token.value = data.token
     refreshToken.value = data.refreshToken
 
@@ -51,6 +55,9 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
     try {
       const res = await authService.login(credentials)
+      if (!res.isSuccess) {
+        throw new Error(res.message ?? 'Login failed')
+      }
       setSession(res)
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'Login failed'

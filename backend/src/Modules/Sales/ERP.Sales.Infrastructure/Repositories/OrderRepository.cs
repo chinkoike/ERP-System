@@ -51,10 +51,18 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
         var query = Query();
 
         if (startDate.HasValue)
-            query = query.Where(o => o.OrderDate >= startDate.Value);
+        {
+            // แปลงเป็น UTC ก่อนส่งเข้า Query
+            var startUtc = DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc);
+            query = query.Where(o => o.OrderDate >= startUtc);
+        }
 
         if (endDate.HasValue)
-            query = query.Where(o => o.OrderDate <= endDate.Value);
+        {
+            // แปลงเป็น UTC ก่อนส่งเข้า Query
+            var endUtc = DateTime.SpecifyKind(endDate.Value, DateTimeKind.Utc);
+            query = query.Where(o => o.OrderDate <= endUtc);
+        }
 
         return await query.SumAsync(o => o.TotalAmount, cancellationToken);
     }

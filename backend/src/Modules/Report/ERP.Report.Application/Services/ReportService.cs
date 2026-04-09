@@ -42,9 +42,8 @@ public class ReportService : IReportService
 
     public async Task<SalesReportDto> GetSalesReportAsync(DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)
     {
-        var start = startDate?.Date ?? DateTime.UtcNow.AddMonths(-6).Date;
-        var end = endDate?.Date.AddDays(1).AddTicks(-1) ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
-
+        var start = startDate.HasValue ? DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc) : (DateTime?)null;
+        var end = endDate.HasValue ? DateTime.SpecifyKind(endDate.Value, DateTimeKind.Utc) : (DateTime?)null;
         var ordersQuery = _orderRepository.Query().Where(o => o.OrderDate >= start && o.OrderDate <= end);
 
         var totalSales = await ordersQuery.SumAsync(o => o.TotalAmount, cancellationToken);
@@ -125,8 +124,12 @@ public class ReportService : IReportService
 
     public async Task<FinancialSummaryDto> GetFinancialSummaryAsync(DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)
     {
-        var start = startDate?.Date ?? DateTime.UtcNow.AddMonths(-6).Date;
-        var end = endDate?.Date.AddDays(1).AddTicks(-1) ?? DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+        var start = startDate.HasValue
+            ? DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc)
+            : DateTime.UtcNow.AddMonths(-6).Date;
+        var end = endDate.HasValue
+            ? DateTime.SpecifyKind(endDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc)
+            : DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
 
         var invoicesQuery = _invoiceRepository.Query().Where(i => i.InvoiceDate >= start && i.InvoiceDate <= end);
         var paymentsQuery = _paymentRepository.Query().Where(p => p.PaymentDate >= start && p.PaymentDate <= end);

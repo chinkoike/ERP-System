@@ -22,8 +22,8 @@ export interface AuthUser {
 }
 
 export interface AuthResponse {
-  token: string
-  refreshToken: string
+  token?: string
+  refreshToken?: string
   expiresIn?: number
   isSuccess?: boolean
   message?: string

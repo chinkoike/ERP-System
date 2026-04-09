@@ -8,11 +8,8 @@ public class SalesDbContext(DbContextOptions<SalesDbContext> options) : DbContex
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<Customer> Customers { get; set; }
-    public DbSet<Product> Products { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Product>();
-        // 1. กำหนดความละเอียดของเงิน (Decimal Precision)
         modelBuilder.Entity<Order>().Property(o => o.TotalAmount).HasPrecision(18, 2);
         modelBuilder.Entity<OrderItem>().Property(i => i.UnitPrice).HasPrecision(18, 2);
 

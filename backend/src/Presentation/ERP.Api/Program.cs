@@ -34,6 +34,7 @@ using ERP.Report.Application.Services.Interfaces;
 using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using ERP.Shared.Infrastructure.Middleware;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -103,11 +104,11 @@ builder.Services.AddSwaggerGen(c =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // 3. DbContext Registrations
-builder.Services.AddDbContext<IdentityDbContext>(opt => opt.UseSqlServer(connectionString));
-builder.Services.AddDbContext<InventoryDbContext>(opt => opt.UseSqlServer(connectionString));
-builder.Services.AddDbContext<SalesDbContext>(opt => opt.UseSqlServer(connectionString));
-builder.Services.AddDbContext<PurchasingDbContext>(opt => opt.UseSqlServer(connectionString));
-builder.Services.AddDbContext<FinanceDbContext>(opt => opt.UseSqlServer(connectionString));
+builder.Services.AddDbContext<IdentityDbContext>(opt => opt.UseNpgsql(connectionString));
+builder.Services.AddDbContext<InventoryDbContext>(opt => opt.UseNpgsql(connectionString));
+builder.Services.AddDbContext<SalesDbContext>(opt => opt.UseNpgsql(connectionString));
+builder.Services.AddDbContext<FinanceDbContext>(opt => opt.UseNpgsql(connectionString));
+builder.Services.AddDbContext<PurchasingDbContext>(opt => opt.UseNpgsql(connectionString));
 builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<IdentityDbContext>());
 
 // --- 4. Repositories (ลงทะเบียนแบบระบุ Context) ---

@@ -98,7 +98,7 @@
             </select>
           </div>
 
-          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
             <table class="min-w-full border-collapse">
               <thead>
                 <tr class="border-b border-slate-100">

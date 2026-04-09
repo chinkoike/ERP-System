@@ -90,7 +90,7 @@
           </div>
 
           <!-- Products table -->
-          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table class="min-w-full border-collapse">
               <thead>
                 <tr class="border-b border-slate-100 bg-slate-50">
@@ -205,7 +205,7 @@
               <span class="text-lg leading-none">+</span> เพิ่มหมวดหมู่
             </button>
           </div>
-          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table class="min-w-full border-collapse">
               <thead>
                 <tr class="border-b border-slate-100 bg-slate-50">

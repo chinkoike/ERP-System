@@ -113,7 +113,6 @@ public class UsersController : ControllerBase
         // เรียก Service เพื่อตรวจสอบ User และสร้าง Token
         var response = await _identityService.LoginAsync(request, ct);
 
-        if (response == null) return Unauthorized(new { message = "Username หรือ Password ไม่ถูกต้อง" });
 
         return Ok(response);
     }
@@ -124,6 +123,11 @@ public class UsersController : ControllerBase
         try
         {
             var result = await _identityService.RefreshTokenAsync(request, ct);
+            if (result == null || !result.IsSuccess)
+            {
+                return Unauthorized(new { message = result?.Message ?? "Invalid refresh token." });
+            }
+
             return Ok(result);
         }
         catch (Exception ex)

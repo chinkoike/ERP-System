@@ -131,7 +131,7 @@
               <div
                 v-for="point in salesReport.monthlyOrderCount"
                 :key="point.label"
-                class="flex flex-1 flex-col items-center gap-1.5 group h-full"
+                class="flex flex-1 flex-col justify-end items-center gap-1.5 group h-full"
               >
                 <span class="text-[10px] text-slate-400 group-hover:text-slate-900 transition">
                   {{ point.value }}
@@ -190,7 +190,7 @@
                 <div
                   v-for="point in financialReport.monthlyRevenue"
                   :key="point.label"
-                  class="flex flex-1 flex-col items-center gap-1.5 group h-full"
+                  class="flex flex-1 flex-col justify-end items-center gap-1.5 group h-full"
                 >
                   <span
                     class="text-[10px] text-slate-400 group-hover:text-slate-900 transition whitespace-nowrap"
@@ -218,7 +218,7 @@
                 <div
                   v-for="point in financialReport.monthlyInvoiceAmount"
                   :key="point.label"
-                  class="flex flex-1 flex-col items-center gap-1.5 group h-full"
+                  class="flex flex-1 flex-col justify-end items-center gap-1.5 group h-full"
                 >
                   <span
                     class="text-[10px] text-slate-400 group-hover:text-slate-900 transition whitespace-nowrap"
@@ -355,7 +355,7 @@
             />
           </div>
 
-          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table class="min-w-full border-collapse">
               <thead>
                 <tr class="border-b border-slate-100">

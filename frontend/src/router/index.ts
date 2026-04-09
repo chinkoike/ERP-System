@@ -73,7 +73,7 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login' }
   }
-  if (to.name === 'login' && authStore.isAuthenticated) {
+  if (to.name === 'login' && authStore.isAuthenticated && authStore.user) {
     return { name: 'dashboard' }
   }
 
