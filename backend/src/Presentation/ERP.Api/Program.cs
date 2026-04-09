@@ -37,12 +37,12 @@ using ERP.Shared.Infrastructure.Middleware;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
-const string myAllowPolicy = "MyAllowSpecificOrigins";
+const string myAllowPolicy = "myAllowPolicy";
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 // 2. ตั้งค่า CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("myAllowPolicy",
+    options.AddPolicy(myAllowPolicy,
         policy =>
         {
             if (allowedOrigins != null && allowedOrigins.Length > 0)
