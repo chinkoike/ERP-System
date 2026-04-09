@@ -38,14 +38,14 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 const string myAllowPolicy = "myAllowPolicy";
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 // 2. ตั้งค่า CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(myAllowPolicy,
         policy =>
         {
-            if (allowedOrigins != null && allowedOrigins.Length > 0)
+            if (allowedOrigins.Length > 0)
             {
                 // ถ้ามีค่าใน Config ให้ใช้ค่านั้น
                 policy.WithOrigins(allowedOrigins)
