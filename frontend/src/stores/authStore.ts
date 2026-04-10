@@ -10,11 +10,26 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  const normalizedRoles = computed(
+    () => user.value?.roles.map((role) => role.trim().toLowerCase()) ?? [],
+  )
+
+  const roleAliasMap: Record<string, string[]> = {
+    admin: ['admin'],
+    manager: ['manager'],
+    user: ['user', 'staff'],
+  }
+
+  const hasRole = (role: string) => {
+    const key = role.trim().toLowerCase()
+    const aliases = roleAliasMap[key] ?? [key]
+    return normalizedRoles.value.some((userRole) => aliases.includes(userRole))
+  }
+
   const isAuthenticated = computed(() => !!token.value && !!refreshToken.value)
-  const isAdmin = computed(() => user.value?.roles.includes('Admin') ?? false)
-  const isManager = computed(() => user.value?.roles.includes('Manager') ?? false)
-  const isUser = computed(() => user.value?.roles.includes('User') ?? false)
-  const hasRole = (role: string) => user.value?.roles.includes(role) ?? false
+  const isAdmin = computed(() => hasRole('Admin'))
+  const isManager = computed(() => hasRole('Manager'))
+  const isUser = computed(() => hasRole('User'))
   const hasAnyRole = (roles: string[]) => roles.some((role) => hasRole(role))
 
   function setSession(
