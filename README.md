@@ -1,5 +1,8 @@
 # ERP System
 
+[![Frontend Deployment](https://img.shields.io/badge/Frontend-Vercel-black?style=for-the-badge&logo=vercel)](https://erp-system-ten-iota.vercel.app/)
+[![Backend API](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://erp-system-wsyi.onrender.com)
+
 A full-stack Enterprise Resource Planning (ERP) web application built with **ASP.NET Core 9** and **Vue 3**. This project demonstrates modular clean architecture, JWT authentication with refresh tokens, and multi-domain business logic across six core business modules.
 
 ---
@@ -159,9 +162,39 @@ Frontend will be available at `http://localhost:5173`
 Use these default credentials to log in:
 
 - **Username:** admin
-- **Password:** Admin@123
+- **Password:** Password123!
 
 (These should be created via database seed or initial migration)
+
+---
+
+## 📸 Screenshots
+
+<details>
+  <summary>Click to expand screenshots</summary>
+
+### 🔐 Authentication & Security
+
+_Login page with JWT integration_
+![ERP Login](images/erp-login.png)
+
+### 📊 Business Intelligence
+
+_Main dashboard featuring real-time data visualization_
+![Dashboard](images/erp-dashboard.png)
+
+### 📦 Core Modules
+
+| Inventory Management                   | Financial Tracking                 |
+| -------------------------------------- | ---------------------------------- |
+| ![Inventory](images/erp-inventory.png) | ![Finance](images/erp-finance.png) |
+
+### 📑 Reporting System
+
+_Comprehensive business reports_
+![Report](images/erp-report.png)
+
+</details>
 
 ---
 
