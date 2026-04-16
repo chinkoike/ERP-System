@@ -1,19 +1,47 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { identityService } from '@/services/identityService'
-import type { User, Role, CreateUserPayload, UpdateUserPayload, CreateRolePayload, UpdateRolePayload } from '@/types/identity'
+import type {
+  User,
+  Role,
+  CreateUserPayload,
+  UpdateUserPayload,
+  CreateRolePayload,
+  UpdateRolePayload,
+} from '@/types/identity'
 
 export const useIdentityStore = defineStore('identity', () => {
   const users = ref<User[]>([])
+  const currentPage = ref(1)
+  const pageSize = ref(10)
+  const totalItems = ref(0)
+  const totalPages = ref(1)
   const roles = ref<Role[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchUsers() {
+  async function fetchUsers(
+    filter: {
+      searchTerm?: string
+      isActive?: boolean | null
+      pageNumber?: number
+      pageSize?: number
+    } = {},
+  ) {
     loading.value = true
     error.value = null
     try {
-      users.value = await identityService.getUsers()
+      const result = await identityService.searchUsers({
+        searchTerm: filter.searchTerm,
+        isActive: filter.isActive,
+        pageNumber: filter.pageNumber ?? currentPage.value,
+        pageSize: filter.pageSize ?? pageSize.value,
+      })
+      users.value = result.items
+      currentPage.value = result.pageNumber
+      pageSize.value = result.pageSize
+      totalItems.value = result.totalCount
+      totalPages.value = Math.max(1, result.totalPages)
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'โหลด user ไม่สำเร็จ'
     } finally {
@@ -41,7 +69,7 @@ export const useIdentityStore = defineStore('identity', () => {
 
   async function deleteUser(id: string) {
     await identityService.deleteUser(id)
-    users.value = users.value.filter(u => u.id !== id)
+    users.value = users.value.filter((u) => u.id !== id)
   }
 
   async function createRole(payload: CreateRolePayload) {
@@ -56,13 +84,25 @@ export const useIdentityStore = defineStore('identity', () => {
 
   async function deleteRole(id: string) {
     await identityService.deleteRole(id)
-    roles.value = roles.value.filter(r => r.id !== id)
+    roles.value = roles.value.filter((r) => r.id !== id)
   }
 
   return {
-    users, roles, loading, error,
-    fetchUsers, fetchRoles,
-    createUser, updateUser, deleteUser,
-    createRole, updateRole, deleteRole,
+    users,
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    roles,
+    loading,
+    error,
+    fetchUsers,
+    fetchRoles,
+    createUser,
+    updateUser,
+    deleteUser,
+    createRole,
+    updateRole,
+    deleteRole,
   }
 })

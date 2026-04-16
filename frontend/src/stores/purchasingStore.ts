@@ -2,22 +2,46 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { purchasingService } from '@/services/purchasingService'
 import type {
-  PurchaseOrder, Supplier,
-  CreatePurchaseOrderPayload, PurchaseOrderItem,
-  CreateSupplierPayload, UpdateSupplierPayload,
+  PurchaseOrder,
+  Supplier,
+  CreatePurchaseOrderPayload,
+  PurchaseOrderItem,
+  CreateSupplierPayload,
+  UpdateSupplierPayload,
 } from '@/types/purchasing'
 
 export const usePurchasingStore = defineStore('purchasing', () => {
   const purchaseOrders = ref<PurchaseOrder[]>([])
+  const currentPage = ref(1)
+  const pageSize = ref(10)
+  const totalItems = ref(0)
+  const totalPages = ref(1)
   const suppliers = ref<Supplier[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchPurchaseOrders() {
+  async function fetchPurchaseOrders(
+    filter: {
+      searchTerm?: string
+      status?: string
+      pageNumber?: number
+      pageSize?: number
+    } = {},
+  ) {
     loading.value = true
     error.value = null
     try {
-      purchaseOrders.value = await purchasingService.getPurchaseOrders()
+      const result = await purchasingService.searchPurchaseOrders({
+        searchTerm: filter.searchTerm,
+        status: filter.status,
+        pageNumber: filter.pageNumber ?? currentPage.value,
+        pageSize: filter.pageSize ?? pageSize.value,
+      })
+      purchaseOrders.value = result.items
+      currentPage.value = result.pageNumber
+      pageSize.value = result.pageSize
+      totalItems.value = result.totalCount
+      totalPages.value = Math.max(1, result.totalPages)
     } catch (e: unknown) {
       error.value = e instanceof Error ? e.message : 'โหลด PO ไม่สำเร็จ'
     } finally {
@@ -60,13 +84,25 @@ export const usePurchasingStore = defineStore('purchasing', () => {
 
   async function deleteSupplier(id: string) {
     await purchasingService.deleteSupplier(id)
-    suppliers.value = suppliers.value.filter(s => s.id !== id)
+    suppliers.value = suppliers.value.filter((s) => s.id !== id)
   }
 
   return {
-    purchaseOrders, suppliers, loading, error,
-    fetchPurchaseOrders, fetchSuppliers,
-    createPurchaseOrder, receivePurchaseOrder, cancelPurchaseOrder,
-    createSupplier, updateSupplier, deleteSupplier,
+    purchaseOrders,
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+    suppliers,
+    loading,
+    error,
+    fetchPurchaseOrders,
+    fetchSuppliers,
+    createPurchaseOrder,
+    receivePurchaseOrder,
+    cancelPurchaseOrder,
+    createSupplier,
+    updateSupplier,
+    deleteSupplier,
   }
 })

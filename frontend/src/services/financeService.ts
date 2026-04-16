@@ -1,14 +1,30 @@
 import http from './http'
+import type { PagedResult } from '@/types/pagination'
 import type {
-  Invoice, Payment, Account,
-  CreateInvoicePayload, UpdateInvoicePayload,
-  CreatePaymentPayload, CreateAccountPayload,
+  Invoice,
+  Payment,
+  Account,
+  CreateInvoicePayload,
+  UpdateInvoicePayload,
+  CreatePaymentPayload,
+  CreateAccountPayload,
 } from '@/types/finance'
 
 export const financeService = {
   // --- Invoices ---
   async getInvoices(): Promise<Invoice[]> {
     const res = await http.get<Invoice[]>('/api/finance/invoices')
+    return res.data
+  },
+  async searchInvoices(filter: {
+    searchTerm?: string
+    status?: string
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<Invoice>> {
+    const res = await http.get<PagedResult<Invoice>>('/api/finance/invoices/search', {
+      params: filter,
+    })
     return res.data
   },
   async getInvoiceById(id: string): Promise<Invoice> {

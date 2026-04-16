@@ -1,14 +1,27 @@
 import http from './http'
+import type { PagedResult } from '@/types/pagination'
 import type {
-  User, Role,
-  CreateUserPayload, UpdateUserPayload,
-  CreateRolePayload, UpdateRolePayload,
+  User,
+  Role,
+  CreateUserPayload,
+  UpdateUserPayload,
+  CreateRolePayload,
+  UpdateRolePayload,
 } from '@/types/identity'
 
 export const identityService = {
   // --- Users ---
   async getUsers(): Promise<User[]> {
     const res = await http.get<User[]>('/api/users')
+    return res.data
+  },
+  async searchUsers(filter: {
+    searchTerm?: string
+    isActive?: boolean | null
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<User>> {
+    const res = await http.get<PagedResult<User>>('/api/users/search', { params: filter })
     return res.data
   },
   async getUserById(id: string): Promise<User> {

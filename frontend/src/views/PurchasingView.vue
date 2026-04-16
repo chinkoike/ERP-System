@@ -179,6 +179,26 @@
               </tbody>
             </table>
           </div>
+          <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+            <div>แสดง {{ store.purchaseOrders.length }} จาก {{ store.totalItems }} รายการ</div>
+            <div class="flex items-center gap-2">
+              <button
+                @click="loadPurchaseOrders(store.currentPage - 1)"
+                :disabled="store.currentPage <= 1"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ก่อนหน้า
+              </button>
+              <span>หน้า {{ store.currentPage }} / {{ store.totalPages }}</span>
+              <button
+                @click="loadPurchaseOrders(store.currentPage + 1)"
+                :disabled="store.currentPage >= store.totalPages"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- SUPPLIERS TAB -->
@@ -570,7 +590,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { usePurchasingStore } from '@/stores/purchasingStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
 import type { PurchaseOrder, Supplier } from '@/types/purchasing'
@@ -595,14 +615,17 @@ const poStatuses = [
 
 const searchPo = ref('')
 const filterPoStatus = ref('')
-const filteredPo = computed(() =>
-  store.purchaseOrders.filter((po) => {
-    const matchSearch =
-      po.purchaseOrderNumber.toLowerCase().includes(searchPo.value.toLowerCase()) ||
-      po.supplierName.toLowerCase().includes(searchPo.value.toLowerCase())
-    return matchSearch && (!filterPoStatus.value || po.status === filterPoStatus.value)
-  }),
-)
+const filteredPo = computed(() => store.purchaseOrders)
+
+async function loadPurchaseOrders(page = 1) {
+  await store.fetchPurchaseOrders({
+    searchTerm: searchPo.value.trim() || undefined,
+    status: filterPoStatus.value || undefined,
+    pageNumber: page,
+  })
+}
+
+watch([searchPo, filterPoStatus], () => loadPurchaseOrders(1))
 const searchSupplier = ref('')
 const filteredSuppliers = computed(() =>
   store.suppliers.filter(
@@ -836,10 +859,6 @@ function poStatusClass(s: string) {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    store.fetchPurchaseOrders(),
-    store.fetchSuppliers(),
-    inventoryStore.fetchProducts(),
-  ])
+  await Promise.all([loadPurchaseOrders(), store.fetchSuppliers(), inventoryStore.fetchProducts()])
 })
 </script>

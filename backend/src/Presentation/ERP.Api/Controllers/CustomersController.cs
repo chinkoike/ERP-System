@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ERP.Sales.Application.Services.Interfaces;
 using ERP.Sales.Application.DTOs;
 using ERP.Sales.Domain;
+using ERP.Shared;
 using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
@@ -16,7 +17,12 @@ public class CustomersController : ControllerBase
     {
         _salesService = salesService;
     }
-
+    [HttpGet("search")]
+    public async Task<ActionResult<PagedResult<CustomerDto>>> GetPaged([FromQuery] CustomerFilterDto filter)
+    {
+        var result = await _salesService.SearchCustomersAsync(filter);
+        return Ok(result);
+    }
     [HttpGet("{id}")]
     public async Task<ActionResult<CustomerDto>> GetById(Guid id, CancellationToken ct)
     {

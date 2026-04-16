@@ -1,18 +1,20 @@
 using ERP.Sales.Application.DTOs;
 using ERP.Identity.Application.DTOs;
 using ERP.Sales.Domain;
+using ERP.Shared;
 namespace ERP.Sales.Application.Services.Interfaces;
 
 public interface ISalesService
 {
     // === Customer Management ===
+    Task<PagedResult<CustomerDto>> SearchCustomersAsync(CustomerFilterDto filter, CancellationToken ct = default);
+
     Task<CustomerDto?> GetCustomerByIdAsync(Guid id, CancellationToken ct = default);
     Task<IEnumerable<CustomerDto>> GetAllCustomersAsync(CancellationToken ct = default);
     Task<Guid> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken ct = default);
     Task UpdateCustomerAsync(Guid id, UpdateCustomerDto dto, CancellationToken ct = default);
     Task<bool> DeleteCustomerAsync(Guid id, CancellationToken ct = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default);
-
     // === Order Core Logic (หัวใจของระบบ) ===
 
     Task CreateOrderWithUserAsync(
@@ -34,6 +36,7 @@ public interface ISalesService
     Task<OrderSummaryDto?> GetOrderSummaryAsync(Guid orderId, CancellationToken ct = default);
     Task<IEnumerable<OrderSummaryDto>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken ct = default);
     Task<IEnumerable<OrderSummaryDto>> GetRecentOrdersAsync(int count, CancellationToken ct = default);
+    Task<PagedResult<OrderSummaryDto>> SearchOrdersAsync(OrderFilterDto filter, CancellationToken ct = default);
 
     // === Dashboard & Reports ===
     Task<decimal> GetTotalSalesAsync(DateTime? startDate = null, DateTime? endDate = null, CancellationToken ct = default);

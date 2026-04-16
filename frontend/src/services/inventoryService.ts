@@ -1,14 +1,28 @@
 import http from './http'
+import type { PagedResult } from '@/types/pagination'
 import type {
-  Product, Category,
-  CreateProductPayload, UpdateProductPayload, UpdateStockPayload,
-  CreateCategoryPayload, UpdateCategoryPayload,
+  Product,
+  Category,
+  CreateProductPayload,
+  UpdateProductPayload,
+  UpdateStockPayload,
+  CreateCategoryPayload,
+  UpdateCategoryPayload,
 } from '@/types/inventory'
 
 export const inventoryService = {
   // --- Products ---
   async getProducts(): Promise<Product[]> {
     const res = await http.get<Product[]>('/api/products')
+    return res.data
+  },
+  async searchProducts(filter: {
+    searchTerm?: string
+    categoryId?: string
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<Product>> {
+    const res = await http.get<PagedResult<Product>>('/api/products/search', { params: filter })
     return res.data
   },
   async getProductById(id: string): Promise<Product> {
@@ -42,6 +56,16 @@ export const inventoryService = {
     const res = await http.get<Category[]>('/api/categories')
     return res.data
   },
+
+  async searchCategories(filter: {
+    searchTerm?: string
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<Category>> {
+    const res = await http.get<PagedResult<Category>>('/api/categories/search', { params: filter })
+    return res.data
+  },
+
   async createCategory(payload: CreateCategoryPayload): Promise<{ id: string }> {
     const res = await http.post<{ id: string }>('/api/categories', payload)
     return res.data

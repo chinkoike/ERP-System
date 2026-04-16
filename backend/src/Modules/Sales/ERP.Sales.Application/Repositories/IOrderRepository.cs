@@ -1,3 +1,4 @@
+using ERP.Sales.Application.DTOs;
 using ERP.Sales.Domain;
 using ERP.Shared;
 
@@ -11,4 +12,5 @@ public interface IOrderRepository : IGenericRepository<Order>
     Task<IEnumerable<Order>> GetPendingOrdersAsync(CancellationToken cancellationToken = default);
     Task<bool> ExistsByOrderNumberAsync(string orderNumber, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalSalesAsync(DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default);
+    Task<PagedResult<Order>> SearchOrdersAsync(OrderFilterDto filter, CancellationToken cancellationToken = default);
 }

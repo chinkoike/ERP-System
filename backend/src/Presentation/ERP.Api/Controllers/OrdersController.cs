@@ -5,6 +5,7 @@ using ERP.Sales.Application.DTOs;
 using ERP.Sales.Application.DTOs.Requests;
 using ERP.Identity.Application.DTOs;
 using ERP.Sales.Domain;
+using ERP.Shared;
 namespace ERP.Api.Controllers;
 
 [Authorize]
@@ -33,6 +34,13 @@ public class OrdersController : ControllerBase
         // ใช้ DTO สรุปรายการเพื่อลดภาระ Database และ Network
         var orders = await _salesService.GetRecentOrdersAsync(50, ct);
         return Ok(orders);
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<PagedResult<OrderSummaryDto>>> Search([FromQuery] OrderFilterDto filter, CancellationToken ct)
+    {
+        var result = await _salesService.SearchOrdersAsync(filter, ct);
+        return Ok(result);
     }
 
     [HttpGet("by-customer/{customerId}")]

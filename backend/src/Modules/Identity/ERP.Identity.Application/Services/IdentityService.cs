@@ -175,6 +175,18 @@ public class IdentityService : IIdentityService
         return users.Select(MapToUserDto);
     }
 
+    public async Task<PagedResult<UserDto>> SearchUsersAsync(UserFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var usersResult = await _userRepository.SearchUsersAsync(filter, cancellationToken);
+        return new PagedResult<UserDto>
+        {
+            Items = usersResult.Items.Select(MapToUserDto).ToList(),
+            TotalCount = usersResult.TotalCount,
+            PageNumber = usersResult.PageNumber,
+            PageSize = usersResult.PageSize
+        };
+    }
+
     public async Task<IEnumerable<UserDto>> GetActiveUsersAsync(CancellationToken cancellationToken = default)
     {
         var users = await _userRepository.GetQueryable()

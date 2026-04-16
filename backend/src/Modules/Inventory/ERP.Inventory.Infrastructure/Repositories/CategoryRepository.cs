@@ -2,6 +2,8 @@ using ERP.Inventory.Application.Repositories;
 using ERP.Inventory.Domain;
 using ERP.Shared.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using ERP.Inventory.Application.DTOs;
+using ERP.Shared;
 
 namespace ERP.Inventory.Infrastructure.Repositories;
 
@@ -11,6 +13,38 @@ public class CategoryRepository : GenericRepository<Category>, ICategoryReposito
     {
     }
 
+    public async Task<PagedResult<Category>> SearchCategoriesAsync(CategoryFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = Query(); // ใช้ method จาก GenericRepository
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.Trim().ToLower();
+            query = query.Where(c => c.Name.ToLower().Contains(term) ||
+                                    (c.Description != null && c.Description.ToLower().Contains(term)));
+        }
+
+        if (filter.CreatedAfter.HasValue)
+        {
+            query = query.Where(c => c.CreatedAt >= filter.CreatedAfter.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderBy(c => c.Name) // Default sort
+            .Skip((filter.PageNumber - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Category>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = filter.PageNumber,
+            PageSize = filter.PageSize
+        };
+    }
     public async Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name))

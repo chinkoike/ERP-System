@@ -1,6 +1,8 @@
 using System.Linq;
+using ERP.Sales.Application.DTOs;
 using ERP.Sales.Application.Repositories;
 using ERP.Sales.Domain;
+using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,6 +46,62 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
             throw new ArgumentException("Order number cannot be null or empty", nameof(orderNumber));
 
         return await ExistsAsync(o => o.OrderNumber == orderNumber, cancellationToken);
+    }
+
+    public async Task<PagedResult<Order>> SearchOrdersAsync(OrderFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = Query().Include(o => o.Customer).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.Trim().ToLower();
+
+            query = query.Where(o =>
+                o.OrderNumber.ToLower().Contains(term) ||
+                (o.Customer != null && (
+                    o.Customer.FirstName.ToLower().Contains(term) ||
+                    o.Customer.LastName.ToLower().Contains(term)
+                ))
+            );
+        }
+
+        if (filter.CustomerId.HasValue)
+        {
+            query = query.Where(o => o.CustomerId == filter.CustomerId.Value);
+        }
+
+        if (filter.Status.HasValue)
+        {
+            query = query.Where(o => o.Status == filter.Status.Value);
+        }
+
+        if (filter.StartDate.HasValue)
+        {
+            query = query.Where(o => o.OrderDate >= filter.StartDate.Value);
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            query = query.Where(o => o.OrderDate <= filter.EndDate.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var pageNumber = Math.Max(filter.PageNumber, 1);
+        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+
+        var items = await query
+            .OrderByDescending(o => o.OrderDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Order>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 
     public async Task<decimal> GetTotalSalesAsync(DateTime? startDate = null, DateTime? endDate = null, CancellationToken cancellationToken = default)

@@ -1,3 +1,4 @@
+using ERP.Identity.Application.DTOs;
 using ERP.Identity.Domain;
 using ERP.Shared;
 
@@ -11,4 +12,5 @@ public interface IUserRepository : IGenericRepository<User>
     Task<IEnumerable<User>> GetActiveUsersAsync(CancellationToken cancellationToken = default);
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<PagedResult<User>> SearchUsersAsync(UserFilterDto filter, CancellationToken cancellationToken = default);
 }

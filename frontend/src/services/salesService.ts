@@ -1,10 +1,26 @@
 import http from './http'
-import type { OrderSummary, Customer, CreateOrderPayload, CreateCustomerPayload, UpdateCustomerPayload } from '@/types/sales'
+import type { PagedResult } from '@/types/pagination'
+import type {
+  OrderSummary,
+  Customer,
+  CreateOrderPayload,
+  CreateCustomerPayload,
+  UpdateCustomerPayload,
+} from '@/types/sales'
 
 export const salesService = {
   // --- Orders ---
   async getOrders(): Promise<OrderSummary[]> {
     const res = await http.get<OrderSummary[]>('/api/orders')
+    return res.data
+  },
+  async searchOrders(filter: {
+    searchTerm?: string
+    status?: string
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<OrderSummary>> {
+    const res = await http.get<PagedResult<OrderSummary>>('/api/orders/search', { params: filter })
     return res.data
   },
   async getOrderById(id: string): Promise<OrderSummary> {
@@ -29,6 +45,14 @@ export const salesService = {
   // --- Customers ---
   async getCustomers(): Promise<Customer[]> {
     const res = await http.get<Customer[]>('/api/customers')
+    return res.data
+  },
+  async searchCustomers(filter: {
+    searchTerm?: string
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<Customer>> {
+    const res = await http.get<PagedResult<Customer>>('/api/customers/search', { params: filter })
     return res.data
   },
   async getCustomerById(id: string): Promise<Customer> {

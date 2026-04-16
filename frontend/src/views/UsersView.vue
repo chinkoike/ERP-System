@@ -219,6 +219,26 @@
               </tbody>
             </table>
           </div>
+          <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+            <div>แสดง {{ store.users.length }} จาก {{ store.totalItems }} รายการ</div>
+            <div class="flex items-center gap-2">
+              <button
+                @click="loadUsers(store.currentPage - 1)"
+                :disabled="store.currentPage <= 1"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ก่อนหน้า
+              </button>
+              <span>หน้า {{ store.currentPage }} / {{ store.totalPages }}</span>
+              <button
+                @click="loadUsers(store.currentPage + 1)"
+                :disabled="store.currentPage >= store.totalPages"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- ROLES TAB -->
@@ -520,7 +540,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useIdentityStore } from '@/stores/identityStore'
 import type { User, Role } from '@/types/identity'
 
@@ -535,16 +555,17 @@ const tabs = [
 // --- Filters ---
 const searchUser = ref('')
 const filterActive = ref('')
-const filteredUsers = computed(() =>
-  store.users.filter((u) => {
-    const matchSearch =
-      u.username.toLowerCase().includes(searchUser.value.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchUser.value.toLowerCase()) ||
-      (u.fullName ?? '').toLowerCase().includes(searchUser.value.toLowerCase())
-    const matchActive = filterActive.value === '' || String(u.isActive) === filterActive.value
-    return matchSearch && matchActive
-  }),
-)
+const filteredUsers = computed(() => store.users)
+
+async function loadUsers(page = 1) {
+  await store.fetchUsers({
+    searchTerm: searchUser.value.trim() || undefined,
+    isActive: filterActive.value === '' ? undefined : filterActive.value === 'true',
+    pageNumber: page,
+  })
+}
+
+watch([searchUser, filterActive], () => loadUsers(1))
 
 // --- Modal state ---
 const modalLoading = ref(false)
@@ -719,6 +740,6 @@ function formatDate(d: string) {
 }
 
 onMounted(async () => {
-  await Promise.all([store.fetchUsers(), store.fetchRoles()])
+  await Promise.all([loadUsers(), store.fetchRoles()])
 })
 </script>

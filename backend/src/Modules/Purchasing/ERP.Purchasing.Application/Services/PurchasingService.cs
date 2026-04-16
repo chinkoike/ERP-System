@@ -100,6 +100,18 @@ public class PurchasingService : IPurchasingService
         return orders.Select(o => MapToPurchaseOrderDto(o, o.Supplier?.Name ?? string.Empty));
     }
 
+    public async Task<PagedResult<PurchaseOrderDto>> SearchPurchaseOrdersAsync(PurchaseOrderFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var result = await _purchaseOrderRepository.SearchPurchaseOrdersAsync(filter, cancellationToken);
+        return new PagedResult<PurchaseOrderDto>
+        {
+            Items = result.Items.Select(o => MapToPurchaseOrderDto(o, o.Supplier?.Name ?? string.Empty)).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        };
+    }
+
     public async Task<PurchaseOrderDto?> GetPurchaseOrderByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var order = await _purchaseOrderRepository.GetByIdWithItemsAndSupplierAsync(id, cancellationToken);

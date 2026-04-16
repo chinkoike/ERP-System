@@ -1,14 +1,30 @@
 import http from './http'
+import type { PagedResult } from '@/types/pagination'
 import type {
-  PurchaseOrder, Supplier,
-  CreatePurchaseOrderPayload, PurchaseOrderItem,
-  CreateSupplierPayload, UpdateSupplierPayload,
+  PurchaseOrder,
+  Supplier,
+  CreatePurchaseOrderPayload,
+  PurchaseOrderItem,
+  CreateSupplierPayload,
+  UpdateSupplierPayload,
 } from '@/types/purchasing'
 
 export const purchasingService = {
   // --- Purchase Orders ---
   async getPurchaseOrders(): Promise<PurchaseOrder[]> {
     const res = await http.get<PurchaseOrder[]>('/api/purchasing/purchase-orders')
+    return res.data
+  },
+  async searchPurchaseOrders(filter: {
+    searchTerm?: string
+    status?: string
+    pageNumber?: number
+    pageSize?: number
+  }): Promise<PagedResult<PurchaseOrder>> {
+    const res = await http.get<PagedResult<PurchaseOrder>>(
+      '/api/purchasing/purchase-orders/search',
+      { params: filter },
+    )
     return res.data
   },
   async getPurchaseOrderById(id: string): Promise<PurchaseOrder> {

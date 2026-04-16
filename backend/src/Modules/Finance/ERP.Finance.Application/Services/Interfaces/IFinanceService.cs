@@ -1,4 +1,5 @@
 using ERP.Finance.Application.DTOs;
+using ERP.Shared;
 
 namespace ERP.Finance.Application.Services.Interfaces;
 
@@ -6,6 +7,7 @@ public interface IFinanceService
 {
     // Invoice
     Task<IEnumerable<InvoiceDto>> GetAllInvoicesAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<InvoiceDto>> SearchInvoicesAsync(InvoiceFilterDto filter, CancellationToken cancellationToken = default);
     Task<InvoiceDto?> GetInvoiceByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<InvoiceDto?> GetInvoiceByNumberAsync(string invoiceNumber, CancellationToken cancellationToken = default);
     Task<Guid> CreateInvoiceAsync(CreateInvoiceDto dto, CancellationToken cancellationToken = default);

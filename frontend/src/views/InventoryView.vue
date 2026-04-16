@@ -35,236 +35,277 @@
         </button>
       </div>
 
-      <!-- Loading -->
-      <div v-if="store.loading" class="flex items-center justify-center py-24">
-        <svg class="animate-spin h-5 w-5 text-slate-300" fill="none" viewBox="0 0 24 24">
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-      </div>
-
-      <template v-else>
-        <!-- PRODUCTS TAB -->
-        <div v-if="activeTab === 'products'">
-          <!-- Filter row -->
-          <div class="flex items-center gap-3 mb-4">
-            <div class="relative flex-1 max-w-xs">
-              <svg
-                class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
-                />
-              </svg>
-              <input
-                v-model="searchProduct"
-                type="text"
-                placeholder="ค้นหาสินค้า..."
-                class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
-              />
-            </div>
-            <select
-              v-model="filterCategory"
-              class="rounded-2xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-slate-300"
+      <!-- PRODUCTS TAB -->
+      <div v-if="activeTab === 'products'">
+        <!-- Filter row -->
+        <div class="flex items-center gap-3 mb-4">
+          <div class="relative flex-1 max-w-xs">
+            <svg
+              class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <option value="">ทุกหมวดหมู่</option>
-              <option v-for="c in store.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
+              />
+            </svg>
+            <input
+              v-model="searchProduct"
+              type="text"
+              placeholder="ค้นหาสินค้า..."
+              class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
+            />
           </div>
-
-          <!-- Products table -->
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <table class="min-w-full border-collapse">
-              <thead>
-                <tr class="border-b border-slate-100 bg-slate-50">
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    สินค้า
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    SKU
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    หมวดหมู่
-                  </th>
-                  <th
-                    class="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    ราคา
-                  </th>
-                  <th
-                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    Stock
-                  </th>
-                  <th
-                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    สถานะ
-                  </th>
-                  <th class="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="filteredProducts.length === 0">
-                  <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400">
-                    ไม่พบสินค้า
-                  </td>
-                </tr>
-                <tr
-                  v-for="(p, i) in filteredProducts"
-                  :key="p.id"
-                  :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
-                >
-                  <td class="px-6 py-4">
-                    <div class="text-sm font-semibold text-slate-900">{{ p.name }}</div>
-                    <div v-if="p.description" class="max-w-50 truncate text-xs text-slate-500">
-                      {{ p.description }}
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 text-xs font-medium text-slate-500 font-mono">
-                    {{ p.sku }}
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-500">{{ p.categoryName }}</td>
-                  <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
-                    {{ formatCurrency(p.basePrice) }}
-                  </td>
-                  <td class="px-6 py-4 text-center text-sm">
-                    <span
-                      :class="
-                        p.currentStock <= 10
-                          ? 'font-semibold text-rose-600'
-                          : 'font-semibold text-slate-900'
-                      "
-                      >{{ p.currentStock }}</span
-                    >
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <span :class="stockStatusClass(p.currentStock)">{{
-                      stockStatusLabel(p.currentStock)
-                    }}</span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2 justify-end">
-                      <button
-                        @click="openStockModal(p)"
-                        title="ปรับ Stock"
-                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-                      >
-                        ±Stock
-                      </button>
-                      <button
-                        @click="openProductModal(p)"
-                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        @click="confirmDelete('product', p.id, p.name)"
-                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <select
+            v-model="filterCategory"
+            class="rounded-2xl border border-slate-200 bg-white py-2.5 px-3 text-sm text-slate-600 outline-none focus:ring-2 focus:ring-slate-300"
+          >
+            <option value="">ทุกหมวดหมู่</option>
+            <option v-for="c in store.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+          </select>
         </div>
 
-        <!-- CATEGORIES TAB -->
-        <div v-if="activeTab === 'categories'">
-          <div class="flex justify-end mb-4">
+        <!-- Products table -->
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50">
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  สินค้า
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  SKU
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  หมวดหมู่
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  ราคา
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  Stock
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  สถานะ
+                </th>
+                <th class="px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredProducts.length === 0">
+                <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-400">
+                  ไม่พบสินค้า
+                </td>
+              </tr>
+              <tr
+                v-for="(p, i) in filteredProducts"
+                :key="p.id"
+                :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
+              >
+                <td class="px-6 py-4">
+                  <div class="text-sm font-semibold text-slate-900">{{ p.name }}</div>
+                  <div v-if="p.description" class="max-w-50 truncate text-xs text-slate-500">
+                    {{ p.description }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-xs font-medium text-slate-500 font-mono">
+                  {{ p.sku }}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500">{{ p.categoryName }}</td>
+                <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
+                  {{ formatCurrency(p.basePrice) }}
+                </td>
+                <td class="px-6 py-4 text-center text-sm">
+                  <span
+                    :class="
+                      p.currentStock <= 10
+                        ? 'font-semibold text-rose-600'
+                        : 'font-semibold text-slate-900'
+                    "
+                    >{{ p.currentStock }}</span
+                  >
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span :class="stockStatusClass(p.currentStock)">{{
+                    stockStatusLabel(p.currentStock)
+                  }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2 justify-end">
+                    <button
+                      @click="openStockModal(p)"
+                      title="ปรับ Stock"
+                      class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      ±Stock
+                    </button>
+                    <button
+                      @click="openProductModal(p)"
+                      class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      แก้ไข
+                    </button>
+                    <button
+                      @click="confirmDelete('product', p.id, p.name)"
+                      class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+                    >
+                      ลบ
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+          <div>แสดง {{ store.products.length }} จาก {{ store.totalItems }} รายการ</div>
+          <div class="flex items-center gap-2">
             <button
-              @click="openCategoryModal()"
-              class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              @click="loadProducts(store.currentPage - 1)"
+              :disabled="store.currentPage <= 1"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <span class="text-lg leading-none">+</span> เพิ่มหมวดหมู่
+              ก่อนหน้า
+            </button>
+            <span>หน้า {{ store.currentPage }} / {{ store.totalPages }}</span>
+            <button
+              @click="loadProducts(store.currentPage + 1)"
+              :disabled="store.currentPage >= store.totalPages"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ถัดไป
             </button>
           </div>
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <table class="min-w-full border-collapse">
-              <thead>
-                <tr class="border-b border-slate-100 bg-slate-50">
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    ชื่อหมวดหมู่
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    คำอธิบาย
-                  </th>
-                  <th
-                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    สร้างเมื่อ
-                  </th>
-                  <th class="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="store.categories.length === 0">
-                  <td colspan="4" class="px-6 py-12 text-center text-sm text-slate-400">
-                    ไม่พบหมวดหมู่
-                  </td>
-                </tr>
-                <tr
-                  v-for="(c, i) in store.categories"
-                  :key="c.id"
-                  :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
+        </div>
+      </div>
+
+      <!-- CATEGORIES TAB -->
+      <div v-if="activeTab === 'categories'">
+        <div class="flex justify-between mb-4">
+          <div class="relative flex-1 max-w-xs">
+            <svg
+              class="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
+              />
+            </svg>
+            <input
+              ref="searchInputRef"
+              v-model="searchCategoryText"
+              type="text"
+              placeholder="ค้นหาหมวดหมู่..."
+              class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
+            />
+          </div>
+          <button
+            @click="openCategoryModal()"
+            class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            <span class="text-lg leading-none">+</span> เพิ่มหมวดหมู่
+          </button>
+        </div>
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100 bg-slate-50">
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                 >
-                  <td class="px-6 py-4 text-sm font-semibold text-slate-900">{{ c.name }}</td>
-                  <td class="px-6 py-4 text-sm text-slate-500">{{ c.description ?? '—' }}</td>
-                  <td class="px-6 py-4 text-center text-sm text-slate-500">
-                    {{ formatDate(c.createdAt) }}
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2 justify-end">
-                      <button
-                        @click="openCategoryModal(c)"
-                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        @click="confirmDelete('category', c.id, c.name)"
-                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  ชื่อหมวดหมู่
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  คำอธิบาย
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  สร้างเมื่อ
+                </th>
+                <th class="px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="store.categories.length === 0">
+                <td colspan="4" class="px-6 py-12 text-center text-sm text-slate-400">
+                  ไม่พบหมวดหมู่
+                </td>
+              </tr>
+              <tr
+                v-for="(c, i) in store.categories"
+                :key="c.id"
+                :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
+              >
+                <td class="px-6 py-4 text-sm font-semibold text-slate-900">{{ c.name }}</td>
+                <td class="px-6 py-4 text-sm text-slate-500">{{ c.description ?? '—' }}</td>
+                <td class="px-6 py-4 text-center text-sm text-slate-500">
+                  {{ formatDate(c.createdAt) }}
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2 justify-end">
+                    <button
+                      @click="openCategoryModal(c)"
+                      class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      แก้ไข
+                    </button>
+                    <button
+                      @click="confirmDelete('category', c.id, c.name)"
+                      class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+                    >
+                      ลบ
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+          <div>แสดง {{ store.categories.length }} จาก {{ store.categoryTotalItems }} รายการ</div>
+          <div class="flex items-center gap-2">
+            <button
+              @click="loadCategories(store.categoryPage - 1)"
+              :disabled="store.categoryPage <= 1"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ก่อนหน้า
+            </button>
+            <span>หน้า {{ store.categoryPage }} / {{ store.categoryTotalPages }}</span>
+            <button
+              @click="loadCategories(store.categoryPage + 1)"
+              :disabled="store.categoryPage >= store.categoryTotalPages"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ถัดไป
+            </button>
           </div>
         </div>
-      </template>
+      </div>
     </main>
 
     <!-- ===== PRODUCT MODAL ===== -->
@@ -534,10 +575,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useInventoryStore } from '@/stores/inventoryStore'
 import type { Product, Category } from '@/types/inventory'
-
 const store = useInventoryStore()
 
 const activeTab = ref<'products' | 'categories'>('products')
@@ -547,18 +587,48 @@ const tabs = [
 ] as const
 
 // --- Filter ---
+const searchInputRef = ref<HTMLInputElement | null>(null)
+
+//product filter states
 const searchProduct = ref('')
 const filterCategory = ref('')
-const filteredProducts = computed(() =>
-  store.products.filter((p) => {
-    const matchSearch =
-      p.name.toLowerCase().includes(searchProduct.value.toLowerCase()) ||
-      p.sku.toLowerCase().includes(searchProduct.value.toLowerCase())
-    const matchCat = !filterCategory.value || p.categoryId === filterCategory.value
-    return matchSearch && matchCat
-  }),
-)
+const filteredProducts = computed(() => store.products)
 
+async function loadProducts(page = 1) {
+  await store.fetchProducts({
+    searchTerm: searchProduct.value.trim() || undefined,
+    categoryId: filterCategory.value || undefined,
+    pageNumber: page,
+  })
+}
+
+watch([searchProduct, filterCategory], () => loadProducts(1))
+//categories are loaded in inventoryStore on app start, so no need to fetch here
+const searchCategoryText = ref('')
+const categoryPage = ref(1)
+
+// --- ฟังก์ชันโหลดข้อมูล Category ---
+async function loadCategories(page = 1) {
+  categoryPage.value = page
+
+  await store.fetchCategories({
+    searchTerm: searchCategoryText.value.trim() || undefined,
+    pageNumber: page,
+    pageSize: 10,
+  })
+}
+watch(searchCategoryText, () => {
+  if (activeTab.value === 'categories') {
+    loadCategories(1)
+  }
+})
+
+// เมื่อสลับ Tab มาที่ Categories ให้โหลดข้อมูล
+watch(activeTab, (newTab) => {
+  if (newTab === 'categories') {
+    loadCategories(1)
+  }
+})
 // --- Modal state ---
 const modalLoading = ref(false)
 const modalError = ref('')
@@ -753,6 +823,6 @@ function stockStatusClass(stock: number) {
 }
 
 onMounted(async () => {
-  await Promise.all([store.fetchProducts(), store.fetchCategories()])
+  await Promise.all([loadProducts(1), loadCategories(1)])
 })
 </script>

@@ -36,6 +36,18 @@ public class FinanceService : IFinanceService
         return invoices.Select(MapToInvoiceDto);
     }
 
+    public async Task<PagedResult<InvoiceDto>> SearchInvoicesAsync(InvoiceFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var result = await _invoiceRepository.SearchInvoicesAsync(filter, cancellationToken);
+        return new PagedResult<InvoiceDto>
+        {
+            Items = result.Items.Select(MapToInvoiceDto).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        };
+    }
+
     public async Task<InvoiceDto?> GetInvoiceByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var invoice = await _invoiceRepository.GetByIdAsync(id, cancellationToken);

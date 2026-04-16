@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Purchasing.Application.Services.Interfaces;
 using ERP.Purchasing.Application.DTOs;
+using ERP.Shared;
 using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
@@ -62,6 +63,13 @@ public class PurchasingController : ControllerBase
     {
         var pos = await _purchasingService.GetAllPurchaseOrdersAsync(ct);
         return Ok(pos);
+    }
+
+    [HttpGet("purchase-orders/search")]
+    public async Task<IActionResult> SearchPurchaseOrders([FromQuery] PurchaseOrderFilterDto filter, CancellationToken ct = default)
+    {
+        var result = await _purchasingService.SearchPurchaseOrdersAsync(filter, ct);
+        return Ok(result);
     }
 
     [HttpGet("purchase-orders/{id}")]

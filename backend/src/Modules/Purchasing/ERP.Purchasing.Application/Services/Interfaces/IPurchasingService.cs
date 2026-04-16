@@ -1,4 +1,5 @@
 using ERP.Purchasing.Application.DTOs;
+using ERP.Shared;
 
 namespace ERP.Purchasing.Application.Services.Interfaces;
 
@@ -13,6 +14,7 @@ public interface IPurchasingService
 
     // Purchase Order
     Task<IEnumerable<PurchaseOrderDto>> GetAllPurchaseOrdersAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<PurchaseOrderDto>> SearchPurchaseOrdersAsync(PurchaseOrderFilterDto filter, CancellationToken cancellationToken = default);
     Task<PurchaseOrderDto?> GetPurchaseOrderByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Guid> CreatePurchaseOrderAsync(CreatePurchaseOrderDto dto, CancellationToken cancellationToken = default);
     Task<bool> ReceivePurchaseOrderAsync(Guid purchaseOrderId, List<PurchaseOrderItemDto> receiveItems, CancellationToken cancellationToken = default);

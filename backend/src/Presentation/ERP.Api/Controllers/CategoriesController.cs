@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Inventory.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using ERP.Shared;
 namespace ERP.Api.Controllers;
 
 [Authorize]
@@ -15,7 +16,12 @@ public class CategoriesController : ControllerBase
     {
         _inventoryService = inventoryService;
     }
-
+    [HttpGet("search")]
+    public async Task<ActionResult<PagedResult<CategoryDto>>> GetPaged([FromQuery] CategoryFilterDto filter)
+    {
+        var result = await _inventoryService.GetCategoriesPagedAsync(filter);
+        return Ok(result);
+    }
     [HttpGet("{id}")]
     public async Task<ActionResult<CategoryDto>> GetById(Guid id, CancellationToken ct)
     {

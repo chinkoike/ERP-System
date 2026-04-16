@@ -1,3 +1,4 @@
+using ERP.Purchasing.Application.DTOs;
 using ERP.Purchasing.Domain.Entities;
 using ERP.Shared;
 
@@ -10,4 +11,5 @@ public interface IPurchaseOrderRepository : IGenericRepository<PurchaseOrder>
     Task<PurchaseOrder?> GetByIdWithItemsAndSupplierAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<PurchaseOrderItem>> GetItemsByPurchaseOrderIdAsync(Guid purchaseOrderId, CancellationToken cancellationToken = default);
     Task<bool> SupplierHasOrdersAsync(Guid supplierId, CancellationToken cancellationToken = default);
+    Task<PagedResult<PurchaseOrder>> SearchPurchaseOrdersAsync(PurchaseOrderFilterDto filter, CancellationToken cancellationToken = default);
 }

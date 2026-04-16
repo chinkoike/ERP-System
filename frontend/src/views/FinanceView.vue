@@ -199,6 +199,26 @@
               </tbody>
             </table>
           </div>
+          <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+            <div>แสดง {{ store.invoices.length }} จาก {{ store.totalItems }} รายการ</div>
+            <div class="flex items-center gap-2">
+              <button
+                @click="loadInvoices(store.currentPage - 1)"
+                :disabled="store.currentPage <= 1"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ก่อนหน้า
+              </button>
+              <span>หน้า {{ store.currentPage }} / {{ store.totalPages }}</span>
+              <button
+                @click="loadInvoices(store.currentPage + 1)"
+                :disabled="store.currentPage >= store.totalPages"
+                class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                ถัดไป
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- ACCOUNTS TAB -->
@@ -592,7 +612,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useFinanceStore } from '@/stores/financeStore'
 import type { Invoice } from '@/types/finance'
 
@@ -623,14 +643,17 @@ const paymentMethods = [
 // --- Filters ---
 const searchInvoice = ref('')
 const filterInvoiceStatus = ref('')
-const filteredInvoices = computed(() =>
-  store.invoices.filter((inv) => {
-    const matchSearch =
-      inv.invoiceNumber.toLowerCase().includes(searchInvoice.value.toLowerCase()) ||
-      (inv.description ?? '').toLowerCase().includes(searchInvoice.value.toLowerCase())
-    return matchSearch && (!filterInvoiceStatus.value || inv.status === filterInvoiceStatus.value)
-  }),
-)
+const filteredInvoices = computed(() => store.invoices)
+
+async function loadInvoices(page = 1) {
+  await store.fetchInvoices({
+    searchTerm: searchInvoice.value.trim() || undefined,
+    status: filterInvoiceStatus.value || undefined,
+    pageNumber: page,
+  })
+}
+
+watch([searchInvoice, filterInvoiceStatus], () => loadInvoices(1))
 
 // --- Modal state ---
 const modalLoading = ref(false)
@@ -864,6 +887,6 @@ function invoiceStatusClass(s: string) {
 }
 
 onMounted(async () => {
-  await Promise.all([store.fetchInvoices(), store.fetchAccounts()])
+  await Promise.all([loadInvoices(), store.fetchAccounts()])
 })
 </script>

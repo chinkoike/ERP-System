@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Finance.Application.Services.Interfaces;
 using ERP.Finance.Application.DTOs;
+using ERP.Shared;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ERP.Api.Controllers;
@@ -22,6 +23,13 @@ public class FinanceController : ControllerBase
     {
         var invoices = await _financeService.GetAllInvoicesAsync(ct);
         return Ok(invoices);
+    }
+
+    [HttpGet("invoices/search")]
+    public async Task<ActionResult<PagedResult<InvoiceDto>>> SearchInvoices([FromQuery] InvoiceFilterDto filter, CancellationToken ct)
+    {
+        var result = await _financeService.SearchInvoicesAsync(filter, ct);
+        return Ok(result);
     }
 
     [HttpGet("invoices/{id}")]

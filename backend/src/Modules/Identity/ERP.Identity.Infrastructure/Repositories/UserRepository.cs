@@ -1,5 +1,7 @@
+using ERP.Identity.Application.DTOs;
 using ERP.Identity.Application.Repositories;
 using ERP.Identity.Domain;
+using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,6 +61,59 @@ public class UserRepository : GenericRepository<User>, IUserRepository
             throw new ArgumentException("Email cannot be null or empty", nameof(email));
 
         return await ExistsAsync(u => u.Email == email, cancellationToken);
+    }
+
+    public async Task<PagedResult<User>> SearchUsersAsync(UserFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = DbContext.Set<User>()
+            .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.Trim();
+            query = query.Where(u =>
+                u.Username.Contains(term) ||
+                u.Email.Contains(term) ||
+                (u.FirstName != null && u.FirstName.Contains(term)) ||
+                (u.LastName != null && u.LastName.Contains(term)) ||
+                (u.Department != null && u.Department.Contains(term)));
+        }
+
+        if (filter.RoleId.HasValue)
+        {
+            query = query.Where(u => u.UserRoles.Any(ur => ur.RoleId == filter.RoleId.Value));
+        }
+
+        if (filter.IsActive.HasValue)
+        {
+            query = query.Where(u => u.IsActive == filter.IsActive.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Department))
+        {
+            var department = filter.Department.Trim();
+            query = query.Where(u => u.Department != null && u.Department.Contains(department));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var pageNumber = Math.Max(filter.PageNumber, 1);
+        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+
+        var items = await query
+            .OrderBy(u => u.Username)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<User>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 
     public async Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)

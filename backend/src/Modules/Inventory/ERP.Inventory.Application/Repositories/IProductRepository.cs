@@ -1,3 +1,4 @@
+using ERP.Inventory.Application.DTOs;
 using ERP.Inventory.Domain;
 using ERP.Shared;
 
@@ -10,4 +11,5 @@ public interface IProductRepository : IGenericRepository<Product>
     Task<IEnumerable<Product>> GetLowStockProductsAsync(int threshold = 10, CancellationToken cancellationToken = default);
     Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default);
     Task UpdateStockAsync(Guid productId, int newStock, CancellationToken cancellationToken = default);
+    Task<PagedResult<Product>> SearchProductsAsync(ProductFilterDto filter, CancellationToken cancellationToken = default);
 }

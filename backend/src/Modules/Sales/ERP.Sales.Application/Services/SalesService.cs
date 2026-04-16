@@ -39,6 +39,30 @@ public class SalesService : ISalesService
     }
 
     // Customer operations
+    public async Task<PagedResult<CustomerDto>> SearchCustomersAsync(CustomerFilterDto filter, CancellationToken ct = default)
+    {
+        // 1. ดึงข้อมูลแบบ Paged จาก Repository
+        var result = await _customerRepository.SearchCustomersAsync(filter, ct);
+
+        // 2. ทำ Manual Mapping จาก Entity (Customer) ไปเป็น DTO (CustomerDto)
+        return new PagedResult<CustomerDto>
+        {
+            Items = result.Items.Select(c => new CustomerDto
+            {
+                Id = c.Id,
+                FirstName = c.FirstName,
+                LastName = c.LastName,
+                Email = c.Email,
+                Phone = c.Phone,
+                Address = c.Address,
+
+                // เพิ่มฟิลด์อื่นๆ ตามที่มีใน CustomerDto ของคุณ
+            }).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        };
+    }
     public async Task<CustomerDto?> GetCustomerByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var customer = await _customerRepository.GetByIdAsync(id, cancellationToken);
@@ -385,6 +409,33 @@ public class SalesService : ISalesService
         }
 
         return orderSummaries;
+    }
+
+    public async Task<PagedResult<OrderSummaryDto>> SearchOrdersAsync(OrderFilterDto filter, CancellationToken ct = default)
+    {
+        var result = await _orderRepository.SearchOrdersAsync(filter, ct);
+        var customerIds = result.Items.Select(o => o.CustomerId).Distinct().ToList();
+        var customers = (await _customerRepository.FindAsync(c => customerIds.Contains(c.Id), ct)).ToDictionary(c => c.Id, c => c);
+
+        return new PagedResult<OrderSummaryDto>
+        {
+            Items = result.Items.Select(order => new OrderSummaryDto
+            {
+                OrderId = order.Id,
+                OrderNumber = order.OrderNumber,
+                CustomerId = order.CustomerId,
+                CustomerName = customers.TryGetValue(order.CustomerId, out var customer)
+                    ? $"{customer.FirstName} {customer.LastName}"
+                    : "Unknown",
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                ItemCount = 0,
+                Status = order.Status.ToString()
+            }).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        };
     }
 
     public async Task<int> GetPendingOrdersCountAsync(CancellationToken ct = default)

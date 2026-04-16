@@ -1,5 +1,6 @@
 using ERP.Identity.Application.DTOs;
 using ERP.Identity.Domain; // ยังต้องใช้ User ใน RegisterAsync (หรือจะเปลี่ยนเป็น UserDto ก็ได้)
+using ERP.Shared;
 
 namespace ERP.Identity.Application.Services.Interfaces;
 
@@ -16,6 +17,7 @@ public interface IIdentityService
     Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<PagedResult<UserDto>> SearchUsersAsync(UserFilterDto filter, CancellationToken cancellationToken = default);
 
     // Role Operations
     Task<RoleDto?> GetRoleByIdAsync(Guid id, CancellationToken cancellationToken = default);

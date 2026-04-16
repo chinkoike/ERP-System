@@ -42,160 +42,11 @@
         </button>
       </div>
 
-      <!-- Loading -->
-      <div v-if="store.loading" class="flex items-center justify-center py-24">
-        <svg class="animate-spin h-5 w-5 text-slate-300" fill="none" viewBox="0 0 24 24">
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-      </div>
-
-      <template v-else>
-        <!-- ORDERS TAB -->
-        <div v-if="activeTab === 'orders'">
-          <!-- Filter row -->
-          <div class="flex items-center gap-3 mb-4">
-            <div class="relative flex-1 max-w-md">
-              <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
-                />
-              </svg>
-              <input
-                v-model="searchOrder"
-                type="text"
-                placeholder="ค้นหา order, ลูกค้า..."
-                class="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
-              />
-            </div>
-            <select
-              v-model="filterStatus"
-              class="rounded-2xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-slate-300"
-            >
-              <option value="">ทุกสถานะ</option>
-              <option v-for="s in orderStatuses" :key="s.value" :value="s.value">
-                {{ s.label }}
-              </option>
-            </select>
-          </div>
-
-          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-            <table class="min-w-full border-collapse">
-              <thead>
-                <tr class="border-b border-slate-100">
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    Order
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    ลูกค้า
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    วันที่
-                  </th>
-                  <th
-                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    รายการ
-                  </th>
-                  <th
-                    class="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    ยอดรวม
-                  </th>
-                  <th
-                    class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    สถานะ
-                  </th>
-                  <th class="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="filteredOrders.length === 0">
-                  <td colspan="7" class="px-6 py-20 text-center text-sm text-slate-400">
-                    ไม่พบ order
-                  </td>
-                </tr>
-                <tr
-                  v-for="(o, i) in filteredOrders"
-                  :key="o.orderId"
-                  :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
-                >
-                  <td class="px-6 py-4 text-sm font-mono font-semibold text-slate-900">
-                    {{ o.orderNumber }}
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-600">
-                    {{ o.customerName || '—' }}
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-500">
-                    {{ formatDate(o.orderDate) }}
-                  </td>
-                  <td class="px-6 py-4 text-center text-sm text-slate-600">
-                    {{ o.itemCount }}
-                  </td>
-                  <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
-                    {{ formatCurrency(o.totalAmount) }}
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <span :class="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2 justify-end">
-                      <select
-                        v-if="o.status !== 'Cancelled' && o.status !== 'Delivered'"
-                        @change="
-                          handleStatusChange(o.orderId, ($event.target as HTMLSelectElement).value)
-                        "
-                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 outline-none transition hover:border-slate-300"
-                      >
-                        <option value="">เปลี่ยนสถานะ</option>
-                        <option v-for="s in nextStatuses(o.status)" :key="s.value" :value="s.value">
-                          {{ s.label }}
-                        </option>
-                      </select>
-                      <button
-                        v-if="o.status === 'Pending'"
-                        @click="confirmCancel(o)"
-                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
-                      >
-                        ยกเลิก
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- CUSTOMERS TAB -->
-        <div v-if="activeTab === 'customers'">
-          <div class="relative max-w-md mb-4">
+      <!-- ORDERS TAB -->
+      <div v-if="activeTab === 'orders'">
+        <!-- Filter row -->
+        <div class="flex items-center gap-3 mb-4">
+          <div class="relative flex-1 max-w-md">
             <svg
               class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
               fill="none"
@@ -210,87 +61,255 @@
               />
             </svg>
             <input
-              v-model="searchCustomer"
+              v-model="searchOrder"
               type="text"
-              placeholder="ค้นหาลูกค้า..."
+              placeholder="ค้นหา order, ลูกค้า..."
               class="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
             />
           </div>
+          <select
+            v-model="filterStatus"
+            class="rounded-2xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-slate-300"
+          >
+            <option value="">ทุกสถานะ</option>
+            <option v-for="s in orderStatuses" :key="s.value" :value="s.value">
+              {{ s.label }}
+            </option>
+          </select>
+        </div>
 
-          <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            <table class="min-w-full border-collapse">
-              <thead>
-                <tr class="border-b border-slate-100">
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    ชื่อ
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    Email
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    เบอร์โทร
-                  </th>
-                  <th
-                    class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    ที่อยู่
-                  </th>
-                  <th class="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="filteredCustomers.length === 0">
-                  <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-400">
-                    ไม่พบลูกค้า
-                  </td>
-                </tr>
-                <tr
-                  v-for="(c, i) in filteredCustomers"
-                  :key="c.id"
-                  :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
                 >
-                  <td class="px-6 py-4">
-                    <div class="text-sm font-semibold text-slate-900">
-                      {{ c.fullName }}
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-600">
-                    {{ c.email ?? '—' }}
-                  </td>
-                  <td class="px-6 py-4 text-sm text-slate-600">
-                    {{ c.phone ?? '—' }}
-                  </td>
-                  <td class="px-6 py-4 max-w-50 truncate text-sm text-slate-500">
-                    {{ c.address ?? '—' }}
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="flex items-center gap-2 justify-end">
-                      <button
-                        @click="openCustomerModal(c)"
-                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        @click="confirmDeleteCustomer(c)"
-                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
-                      >
-                        ลบ
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  Order
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  ลูกค้า
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  วันที่
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  รายการ
+                </th>
+                <th
+                  class="px-6 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  ยอดรวม
+                </th>
+                <th
+                  class="px-6 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  สถานะ
+                </th>
+                <th class="px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredOrders.length === 0">
+                <td colspan="7" class="px-6 py-20 text-center text-sm text-slate-400">
+                  ไม่พบ order
+                </td>
+              </tr>
+              <tr
+                v-for="(o, i) in filteredOrders"
+                :key="o.orderId"
+                :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
+              >
+                <td class="px-6 py-4 text-sm font-mono font-semibold text-slate-900">
+                  {{ o.orderNumber }}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">
+                  {{ o.customerName || '—' }}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500">
+                  {{ formatDate(o.orderDate) }}
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-slate-600">
+                  {{ o.itemCount }}
+                </td>
+                <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
+                  {{ formatCurrency(o.totalAmount) }}
+                </td>
+                <td class="px-6 py-4 text-center">
+                  <span :class="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2 justify-end">
+                    <select
+                      v-if="o.status !== 'Cancelled' && o.status !== 'Delivered'"
+                      @change="
+                        handleStatusChange(o.orderId, ($event.target as HTMLSelectElement).value)
+                      "
+                      class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 outline-none transition hover:border-slate-300"
+                    >
+                      <option value="">เปลี่ยนสถานะ</option>
+                      <option v-for="s in nextStatuses(o.status)" :key="s.value" :value="s.value">
+                        {{ s.label }}
+                      </option>
+                    </select>
+                    <button
+                      v-if="o.status === 'Pending'"
+                      @click="confirmCancel(o)"
+                      class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+                    >
+                      ยกเลิก
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+          <div>แสดง {{ store.orders.length }} จาก {{ store.totalItems }} รายการ</div>
+          <div class="flex items-center gap-2">
+            <button
+              @click="loadOrders(store.currentPage - 1)"
+              :disabled="store.currentPage <= 1"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ก่อนหน้า
+            </button>
+            <span>หน้า {{ store.currentPage }} / {{ store.totalPages }}</span>
+            <button
+              @click="loadOrders(store.currentPage + 1)"
+              :disabled="store.currentPage >= store.totalPages"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ถัดไป
+            </button>
           </div>
         </div>
-      </template>
+      </div>
+
+      <!-- CUSTOMERS TAB -->
+      <div v-if="activeTab === 'customers'">
+        <div class="relative max-w-md mb-4">
+          <svg
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"
+            />
+          </svg>
+          <input
+            v-model="searchCustomer"
+            type="text"
+            placeholder="ค้นหาลูกค้า..."
+            class="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
+          />
+        </div>
+
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  ชื่อ
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  Email
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  เบอร์โทร
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  ที่อยู่
+                </th>
+                <th class="px-6 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredCustomers.length === 0">
+                <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-400">
+                  ไม่พบลูกค้า
+                </td>
+              </tr>
+              <tr
+                v-for="(c, i) in filteredCustomers"
+                :key="c.id"
+                :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
+              >
+                <td class="px-6 py-4">
+                  <div class="text-sm font-semibold text-slate-900">
+                    {{ c.fullName }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">
+                  {{ c.email ?? '—' }}
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">
+                  {{ c.phone ?? '—' }}
+                </td>
+                <td class="px-6 py-4 max-w-50 truncate text-sm text-slate-500">
+                  {{ c.address ?? '—' }}
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2 justify-end">
+                    <button
+                      @click="openCustomerModal(c)"
+                      class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
+                    >
+                      แก้ไข
+                    </button>
+                    <button
+                      @click="confirmDeleteCustomer(c)"
+                      class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+                    >
+                      ลบ
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between bg-white px-6 py-4 text-sm text-slate-500">
+          <div>แสดง {{ store.customers.length }} จาก {{ store.customerTotal }} รายการ</div>
+          <div class="flex items-center gap-2">
+            <button
+              @click="loadCustomers(store.currentPage - 1)"
+              :disabled="store.currentPage <= 1"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ก่อนหน้า
+            </button>
+            <span>หน้า {{ store.currentPage }} / {{ store.customerPages }}</span>
+            <button
+              @click="loadOrders(store.currentPage + 1)"
+              :disabled="store.currentPage >= store.totalPages"
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              ถัดไป
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- ===== CREATE ORDER MODAL ===== -->
@@ -546,7 +565,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useSalesStore } from '@/stores/salesStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
 import type { Customer, OrderStatus } from '@/types/sales'
@@ -594,24 +613,29 @@ function nextStatuses(current: OrderStatus) {
 // --- Filter ---
 const searchOrder = ref('')
 const filterStatus = ref('')
-const filteredOrders = computed(() =>
-  store.orders.filter((o) => {
-    const matchSearch =
-      o.orderNumber.toLowerCase().includes(searchOrder.value.toLowerCase()) ||
-      (o.customerName ?? '').toLowerCase().includes(searchOrder.value.toLowerCase())
-    const matchStatus = !filterStatus.value || o.status === filterStatus.value
-    return matchSearch && matchStatus
-  }),
-)
+const filteredOrders = computed(() => store.orders)
+//load orders on mount and when filters change
+async function loadOrders(page = 1) {
+  await store.fetchOrders({
+    searchTerm: searchOrder.value.trim() || undefined,
+    status: filterStatus.value || undefined,
+    pageNumber: page,
+  })
+}
 
+watch([searchOrder, filterStatus], () => loadOrders(1))
+
+//load customers on mount
 const searchCustomer = ref('')
-const filteredCustomers = computed(() =>
-  store.customers.filter(
-    (c) =>
-      c.fullName.toLowerCase().includes(searchCustomer.value.toLowerCase()) ||
-      (c.email ?? '').toLowerCase().includes(searchCustomer.value.toLowerCase()),
-  ),
-)
+const filteredCustomers = computed(() => store.customers)
+async function loadCustomers(page = 1) {
+  await store.fetchCustomers({
+    searchTerm: searchCustomer.value.trim() || undefined,
+    pageNumber: page,
+    pageSize: 100, // load all customers for dropdown
+  })
+}
+watch(searchCustomer, () => loadCustomers(1))
 
 // --- Modal state ---
 const modalLoading = ref(false)
@@ -813,6 +837,6 @@ function statusBadgeClass(s: string) {
 }
 
 onMounted(async () => {
-  await Promise.all([store.fetchOrders(), store.fetchCustomers(), inventoryStore.fetchProducts()])
+  await Promise.all([loadOrders(), loadCustomers(), inventoryStore.fetchProducts()])
 })
 </script>

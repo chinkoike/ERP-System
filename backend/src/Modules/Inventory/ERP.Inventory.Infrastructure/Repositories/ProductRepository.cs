@@ -1,5 +1,7 @@
+using ERP.Inventory.Application.DTOs;
 using ERP.Inventory.Application.Repositories;
 using ERP.Inventory.Domain;
+using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +30,53 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
     public async Task<IEnumerable<Product>> GetLowStockProductsAsync(int threshold = 10, CancellationToken cancellationToken = default)
     {
         return await FindAsync(p => p.CurrentStock <= threshold, cancellationToken);
+    }
+
+    public async Task<PagedResult<Product>> SearchProductsAsync(ProductFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = DbContext.Set<Product>().AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.Trim();
+            query = query.Where(p =>
+                p.Name.Contains(term) ||
+                p.SKU.Contains(term) ||
+                (p.Description != null && p.Description.Contains(term)));
+        }
+
+        if (filter.CategoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == filter.CategoryId.Value);
+        }
+
+        if (filter.MinStock.HasValue)
+        {
+            query = query.Where(p => p.CurrentStock >= filter.MinStock.Value);
+        }
+
+        if (filter.MaxStock.HasValue)
+        {
+            query = query.Where(p => p.CurrentStock <= filter.MaxStock.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var pageNumber = Math.Max(filter.PageNumber, 1);
+        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+
+        var items = await query
+            .OrderBy(p => p.Name)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Product>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 
     public async Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default)

@@ -48,6 +48,20 @@ public class InventoryService : IInventoryService
         return products.Select(p => MapToProductDto(p, categoryMap.TryGetValue(p.CategoryId, out var name) ? name : null));
     }
 
+    public async Task<PagedResult<ProductDto>> SearchProductsAsync(ProductFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var result = await _productRepository.SearchProductsAsync(filter, cancellationToken);
+        var categoryMap = (await _categoryRepository.GetAllAsync(cancellationToken)).ToDictionary(c => c.Id, c => c.Name);
+
+        return new PagedResult<ProductDto>
+        {
+            Items = result.Items.Select(p => MapToProductDto(p, categoryMap.TryGetValue(p.CategoryId, out var name) ? name : null)).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        };
+    }
+
     public async Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default)
     {
         var products = await _productRepository.GetByCategoryAsync(categoryId, cancellationToken);
@@ -163,6 +177,19 @@ public class InventoryService : IInventoryService
         return await _categoryRepository.GetProductCountAsync(categoryId, cancellationToken);
     }
 
+    // --- Category Command Operations ---
+    public async Task<PagedResult<CategoryDto>> GetCategoriesPagedAsync(CategoryFilterDto filter)
+    {
+        var pagedCategories = await _categoryRepository.SearchCategoriesAsync(filter);
+
+        return new PagedResult<CategoryDto>
+        {
+            Items = pagedCategories.Items.Select(MapToCategoryDto).ToList(),
+            TotalCount = pagedCategories.TotalCount,
+            PageNumber = pagedCategories.PageNumber,
+            PageSize = pagedCategories.PageSize
+        };
+    }
     public async Task<Guid> CreateCategoryAsync(CreateCategoryDto dto, CancellationToken ct)
     {
         var category = new Category

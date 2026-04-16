@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Identity.Application.Services.Interfaces;
 using ERP.Identity.Application.DTOs;
+using ERP.Shared;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ERP.Api.Controllers;
@@ -48,6 +49,14 @@ public class UsersController : ControllerBase
     {
         var users = await _identityService.GetActiveUsersAsync(ct);
         return Ok(users);
+    }
+
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpGet("search")]
+    public async Task<ActionResult<PagedResult<UserDto>>> Search([FromQuery] UserFilterDto filter, CancellationToken ct)
+    {
+        var result = await _identityService.SearchUsersAsync(filter, ct);
+        return Ok(result);
     }
 
     [Authorize(Roles = "Admin,Manager")]

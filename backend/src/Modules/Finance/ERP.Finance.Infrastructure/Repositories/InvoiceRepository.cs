@@ -1,5 +1,7 @@
+using ERP.Finance.Application.DTOs;
 using ERP.Finance.Application.Repositories;
 using ERP.Finance.Domain.Entities;
+using ERP.Shared;
 using ERP.Shared.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,5 +25,61 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
     public async Task<IEnumerable<Invoice>> GetOverdueInvoicesAsync(CancellationToken cancellationToken = default)
     {
         return await FindAsync(i => i.DueDate < DateTime.UtcNow && i.Status != InvoiceStatus.Paid, cancellationToken);
+    }
+
+    public async Task<PagedResult<Invoice>> SearchInvoicesAsync(InvoiceFilterDto filter, CancellationToken cancellationToken = default)
+    {
+        var query = DbContext.Set<Invoice>().AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
+        {
+            var term = filter.SearchTerm.Trim();
+            query = query.Where(i =>
+                i.InvoiceNumber.Contains(term) ||
+                (i.Description != null && i.Description.Contains(term)));
+        }
+
+        if (filter.CustomerId.HasValue)
+        {
+            query = query.Where(i => i.CustomerId == filter.CustomerId.Value);
+        }
+
+        if (filter.SupplierId.HasValue)
+        {
+            query = query.Where(i => i.SupplierId == filter.SupplierId.Value);
+        }
+
+        if (filter.Status.HasValue)
+        {
+            query = query.Where(i => i.Status == filter.Status.Value);
+        }
+
+        if (filter.StartDate.HasValue)
+        {
+            query = query.Where(i => i.InvoiceDate >= filter.StartDate.Value);
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            query = query.Where(i => i.InvoiceDate <= filter.EndDate.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var pageNumber = Math.Max(filter.PageNumber, 1);
+        var pageSize = Math.Clamp(filter.PageSize, 1, 100);
+
+        var items = await query
+            .OrderByDescending(i => i.InvoiceDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Invoice>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
     }
 }

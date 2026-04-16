@@ -1,4 +1,5 @@
 using ERP.Inventory.Application.DTOs;
+using ERP.Shared;
 
 namespace ERP.Inventory.Application.Services.Interfaces;
 
@@ -11,6 +12,7 @@ public interface IInventoryService
     Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(Guid categoryId, CancellationToken cancellationToken = default);
     Task<IEnumerable<ProductDto>> GetLowStockProductsAsync(int threshold = 10, CancellationToken cancellationToken = default);
     Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default);
+    Task<PagedResult<ProductDto>> SearchProductsAsync(ProductFilterDto filter, CancellationToken cancellationToken = default);
 
     // ใช้ CreateProductDto เพื่อรับข้อมูลที่จำเป็นตอนสร้างเท่านั้น
     Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto, CancellationToken cancellationToken = default);
@@ -24,6 +26,7 @@ public interface IInventoryService
     Task<bool> DeleteProductAsync(Guid id, CancellationToken cancellationToken = default);
 
     // --- Category Read Operations ---
+    Task<PagedResult<CategoryDto>> GetCategoriesPagedAsync(CategoryFilterDto filter);
     Task<CategoryDto?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<CategoryDto?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default);
     Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync(CancellationToken cancellationToken = default);

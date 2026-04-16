@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ERP.Inventory.Application.Services.Interfaces;
 using ERP.Inventory.Application.DTOs;
+using ERP.Shared;
 using Microsoft.AspNetCore.Authorization;
 namespace ERP.Api.Controllers;
 
@@ -37,6 +38,13 @@ public class ProductsController : ControllerBase
     {
         var products = await _inventoryService.GetAllProductsAsync(ct);
         return Ok(products);
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<PagedResult<ProductDto>>> Search([FromQuery] ProductFilterDto filter, CancellationToken ct)
+    {
+        var result = await _inventoryService.SearchProductsAsync(filter, ct);
+        return Ok(result);
     }
 
     [HttpGet("by-category/{categoryId}")]
