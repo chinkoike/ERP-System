@@ -116,58 +116,84 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="filteredOrders.length === 0">
-                <td colspan="7" class="px-6 py-20 text-center text-sm text-slate-400">
-                  ไม่พบ order
-                </td>
-              </tr>
-              <tr
-                v-for="(o, i) in filteredOrders"
-                :key="o.orderId"
-                :class="[{ 'bg-slate-50': i % 2 === 1 }, 'border-b border-slate-100']"
-              >
-                <td class="px-6 py-4 text-sm font-mono font-semibold text-slate-900">
-                  {{ o.orderNumber }}
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-600">
-                  {{ o.customerName || '—' }}
-                </td>
-                <td class="px-6 py-4 text-sm text-slate-500">
-                  {{ formatDate(o.orderDate) }}
-                </td>
-                <td class="px-6 py-4 text-center text-sm text-slate-600">
-                  {{ o.itemCount }}
-                </td>
-                <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
-                  {{ formatCurrency(o.totalAmount) }}
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span :class="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-2 justify-end">
-                    <select
-                      v-if="o.status !== 'Cancelled' && o.status !== 'Delivered'"
-                      @change="
-                        handleStatusChange(o.orderId, ($event.target as HTMLSelectElement).value)
-                      "
-                      class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 outline-none transition hover:border-slate-300"
-                    >
-                      <option value="">เปลี่ยนสถานะ</option>
-                      <option v-for="s in nextStatuses(o.status)" :key="s.value" :value="s.value">
-                        {{ s.label }}
-                      </option>
-                    </select>
-                    <button
-                      v-if="o.status === 'Pending'"
-                      @click="confirmCancel(o)"
-                      class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
-                    >
-                      ยกเลิก
-                    </button>
-                  </div>
-                </td>
-              </tr>
+              <!-- Skeleton Loading (เฉพาะตอน initial load) -->
+              <template v-if="isInitialLoading">
+                <tr v-for="n in 5" :key="`cat-skeleton-${n}`" class="border-b border-slate-100">
+                  <td class="px-6 py-4">
+                    <div class="h-4 bg-slate-200 rounded-md w-32 animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-3 bg-slate-100 rounded-md w-48 animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-3 bg-slate-200 rounded-md w-24 animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2 justify-end">
+                      <div class="h-8 bg-slate-200 rounded-2xl w-16 animate-pulse"></div>
+                      <div class="h-8 bg-slate-200 rounded-2xl w-12 animate-pulse"></div>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr v-if="filteredOrders.length === 0">
+                  <td colspan="7" class="px-6 py-20 text-center text-sm text-slate-400">
+                    ไม่พบ order
+                  </td>
+                </tr>
+                <tr
+                  v-for="(o, i) in filteredOrders"
+                  :key="o.orderId"
+                  :class="[
+                    { 'bg-slate-50': i % 2 === 1 },
+                    'border-b border-slate-100 transition-opacity duration-200',
+                    { 'opacity-50': isSearching },
+                  ]"
+                >
+                  <td class="px-6 py-4 text-sm font-mono font-semibold text-slate-900">
+                    {{ o.orderNumber }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-slate-600">
+                    {{ o.customerName || '—' }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-slate-500">
+                    {{ formatDate(o.orderDate) }}
+                  </td>
+                  <td class="px-6 py-4 text-center text-sm text-slate-600">
+                    {{ o.itemCount }}
+                  </td>
+                  <td class="px-6 py-4 text-right text-sm font-semibold text-slate-900">
+                    {{ formatCurrency(o.totalAmount) }}
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span :class="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2 justify-end">
+                      <select
+                        v-if="o.status !== 'Cancelled' && o.status !== 'Delivered'"
+                        @change="
+                          handleStatusChange(o.orderId, ($event.target as HTMLSelectElement).value)
+                        "
+                        class="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 outline-none transition hover:border-slate-300"
+                      >
+                        <option value="">เปลี่ยนสถานะ</option>
+                        <option v-for="s in nextStatuses(o.status)" :key="s.value" :value="s.value">
+                          {{ s.label }}
+                        </option>
+                      </select>
+                      <button
+                        v-if="o.status === 'Pending'"
+                        @click="confirmCancel(o)"
+                        class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -176,7 +202,7 @@
           <div class="flex items-center gap-2">
             <button
               @click="loadOrders(store.currentPage - 1)"
-              :disabled="store.currentPage <= 1"
+              :disabled="store.currentPage <= 1 || isSearching"
               class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               ก่อนหน้า
@@ -184,7 +210,7 @@
             <span>หน้า {{ store.currentPage }} / {{ store.totalPages }}</span>
             <button
               @click="loadOrders(store.currentPage + 1)"
-              :disabled="store.currentPage >= store.totalPages"
+              :disabled="store.currentPage >= store.totalPages || isSearching"
               class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               ถัดไป
@@ -245,6 +271,39 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Skeleton Loading (เฉพาะตอน initial load) -->
+              <template v-if="isInitialLoading">
+                <tr v-for="n in 5" :key="`skeleton-${n}`" class="border-b border-slate-100">
+                  <td class="px-6 py-4">
+                    <div class="space-y-2">
+                      <div class="h-4 bg-slate-200 rounded-md w-32 animate-pulse"></div>
+                      <div class="h-3 bg-slate-100 rounded-md w-48 animate-pulse"></div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-3 bg-slate-200 rounded-md w-20 animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-3 bg-slate-200 rounded-md w-24 animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-4 bg-slate-200 rounded-md w-16 ml-auto animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-4 bg-slate-200 rounded-md w-8 mx-auto animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="h-6 bg-slate-200 rounded-full w-16 mx-auto animate-pulse"></div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2 justify-end">
+                      <div class="h-8 bg-slate-200 rounded-2xl w-16 animate-pulse"></div>
+                      <div class="h-8 bg-slate-200 rounded-2xl w-16 animate-pulse"></div>
+                      <div class="h-8 bg-slate-200 rounded-2xl w-12 animate-pulse"></div>
+                    </div>
+                  </td>
+                </tr>
+              </template>
               <tr v-if="filteredCustomers.length === 0">
                 <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-400">
                   ไม่พบลูกค้า
@@ -578,6 +637,8 @@ const tabs = [
   { key: 'orders', label: 'Orders' },
   { key: 'customers', label: 'ลูกค้า' },
 ] as const
+const isInitialLoading = ref(true) // สำหรับ skeleton ตอนโหลดครั้งแรก
+const isSearching = ref(false) // สำหรับ search/pagination (แสดง opacity + spinner)
 
 // products สำหรับ dropdown ใน order form
 const products = computed(() => inventoryStore.products)
@@ -616,11 +677,24 @@ const filterStatus = ref('')
 const filteredOrders = computed(() => store.orders)
 //load orders on mount and when filters change
 async function loadOrders(page = 1) {
-  await store.fetchOrders({
-    searchTerm: searchOrder.value.trim() || undefined,
-    status: filterStatus.value || undefined,
-    pageNumber: page,
-  })
+  // ถ้าเป็นการโหลดครั้งแรก (page 1 และยังไม่มีข้อมูล) ให้แสดง skeleton
+  if (page === 1 && store.orders.length === 0) {
+    isInitialLoading.value = true
+  } else {
+    // ถ้าไม่ใช่ครั้งแรก (search/pagination) ให้แสดง loading overlay
+    isSearching.value = true
+  }
+
+  try {
+    await store.fetchOrders({
+      searchTerm: searchOrder.value.trim() || undefined,
+      status: filterStatus.value || undefined,
+      pageNumber: page,
+    })
+  } finally {
+    isInitialLoading.value = false
+    isSearching.value = false
+  }
 }
 
 watch([searchOrder, filterStatus], () => loadOrders(1))
@@ -629,13 +703,27 @@ watch([searchOrder, filterStatus], () => loadOrders(1))
 const searchCustomer = ref('')
 const filteredCustomers = computed(() => store.customers)
 async function loadCustomers(page = 1) {
-  await store.fetchCustomers({
-    searchTerm: searchCustomer.value.trim() || undefined,
-    pageNumber: page,
-    pageSize: 100, // load all customers for dropdown
-  })
+  // ถ้าเป็นการโหลดครั้งแรก (page 1 และยังไม่มีข้อมูล) ให้แสดง skeleton
+  if (page === 1 && store.customers.length === 0) {
+    isInitialLoading.value = true
+  } else {
+    // ถ้าไม่ใช่ครั้งแรก (search/pagination) ให้แสดง loading overlay
+    isSearching.value = true
+  }
+
+  try {
+    await store.fetchCustomers({
+      searchTerm: searchCustomer.value.trim() || undefined,
+      pageNumber: page,
+      pageSize: 100, // load all customers for dropdown
+    })
+  } finally {
+    isInitialLoading.value = false
+    isSearching.value = false
+  }
 }
-watch(searchCustomer, () => loadCustomers(1))
+
+watch([searchCustomer], () => loadCustomers(1))
 
 // --- Modal state ---
 const modalLoading = ref(false)

@@ -72,13 +72,13 @@ public class UserRepository : GenericRepository<User>, IUserRepository
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
-            var term = filter.SearchTerm.Trim();
+            var term = filter.SearchTerm.Trim().ToLower();
             query = query.Where(u =>
-                u.Username.Contains(term) ||
-                u.Email.Contains(term) ||
-                (u.FirstName != null && u.FirstName.Contains(term)) ||
-                (u.LastName != null && u.LastName.Contains(term)) ||
-                (u.Department != null && u.Department.Contains(term)));
+                u.Username.ToLower().Contains(term) ||
+                u.Email.ToLower().Contains(term) ||
+                (u.FirstName != null && u.FirstName.ToLower().Contains(term)) ||
+                (u.LastName != null && u.LastName.ToLower().Contains(term)) ||
+                (u.Department != null && u.Department.ToLower().Contains(term)));
         }
 
         if (filter.RoleId.HasValue)

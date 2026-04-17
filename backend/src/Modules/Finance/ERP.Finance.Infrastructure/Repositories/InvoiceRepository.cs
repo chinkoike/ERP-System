@@ -33,10 +33,10 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
-            var term = filter.SearchTerm.Trim();
+            var term = filter.SearchTerm.Trim().ToLower();
             query = query.Where(i =>
-                i.InvoiceNumber.Contains(term) ||
-                (i.Description != null && i.Description.Contains(term)));
+                i.InvoiceNumber.ToLower().Contains(term) ||
+                (i.Description != null && i.Description.ToLower().Contains(term)));
         }
 
         if (filter.CustomerId.HasValue)
@@ -47,6 +47,11 @@ public class InvoiceRepository : GenericRepository<Invoice>, IInvoiceRepository
         if (filter.SupplierId.HasValue)
         {
             query = query.Where(i => i.SupplierId == filter.SupplierId.Value);
+        }
+
+        if (filter.AccountId.HasValue)
+        {
+            query = query.Where(i => i.AccountId == filter.AccountId.Value);
         }
 
         if (filter.Status.HasValue)

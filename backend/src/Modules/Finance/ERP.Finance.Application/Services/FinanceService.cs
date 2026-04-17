@@ -270,6 +270,7 @@ public class FinanceService : IFinanceService
         InvoiceNumber = invoice.InvoiceNumber,
         CustomerId = invoice.CustomerId ?? Guid.Empty,
         SupplierId = invoice.SupplierId ?? Guid.Empty,
+        AccountId = invoice.AccountId,
         PurchaseOrderId = invoice.PurchaseOrderId,
         TotalAmount = invoice.TotalAmount,
         Description = invoice.Description,

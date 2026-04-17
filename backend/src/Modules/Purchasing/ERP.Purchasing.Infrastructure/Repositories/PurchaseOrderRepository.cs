@@ -53,10 +53,10 @@ public class PurchaseOrderRepository : GenericRepository<PurchaseOrder>, IPurcha
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
-            var term = filter.SearchTerm.Trim();
+            var term = filter.SearchTerm.Trim().ToLower();
             query = query.Where(po =>
-                po.PurchaseOrderNumber.Contains(term) ||
-                (po.Supplier != null && po.Supplier.Name.Contains(term)));
+                po.PurchaseOrderNumber.ToLower().Contains(term) ||
+                (po.Supplier != null && po.Supplier.Name.ToLower().Contains(term)));
         }
 
         if (filter.SupplierId.HasValue)

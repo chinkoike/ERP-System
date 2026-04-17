@@ -25,6 +25,9 @@ export const useFinanceStore = defineStore('finance', () => {
   async function fetchInvoices(
     filter: {
       searchTerm?: string
+      customerId?: string
+      supplierId?: string
+      accountId?: string
       status?: string
       pageNumber?: number
       pageSize?: number
@@ -35,6 +38,9 @@ export const useFinanceStore = defineStore('finance', () => {
     try {
       const result = await financeService.searchInvoices({
         searchTerm: filter.searchTerm,
+        customerId: filter.customerId,
+        supplierId: filter.supplierId,
+        accountId: filter.accountId,
         status: filter.status,
         pageNumber: filter.pageNumber ?? currentPage.value,
         pageSize: filter.pageSize ?? pageSize.value,

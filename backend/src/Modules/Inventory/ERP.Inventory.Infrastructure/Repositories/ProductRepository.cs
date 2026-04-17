@@ -38,11 +38,11 @@ public class ProductRepository : GenericRepository<Product>, IProductRepository
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {
-            var term = filter.SearchTerm.Trim();
+            var term = filter.SearchTerm.Trim().ToLower();
             query = query.Where(p =>
-                p.Name.Contains(term) ||
-                p.SKU.Contains(term) ||
-                (p.Description != null && p.Description.Contains(term)));
+                p.Name.ToLower().Contains(term) ||
+                p.SKU.ToLower().Contains(term) ||
+                (p.Description != null && p.Description.ToLower().Contains(term)));
         }
 
         if (filter.CategoryId.HasValue)

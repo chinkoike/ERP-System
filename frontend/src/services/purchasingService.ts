@@ -17,6 +17,7 @@ export const purchasingService = {
   },
   async searchPurchaseOrders(filter: {
     searchTerm?: string
+    supplierId?: string
     status?: string
     pageNumber?: number
     pageSize?: number

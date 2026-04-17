@@ -6,6 +6,7 @@ export interface Invoice {
   invoiceNumber: string
   customerId: string
   supplierId: string
+  accountId?: string
   purchaseOrderId?: string
   description?: string
   totalAmount: number
@@ -19,6 +20,7 @@ export interface CreateInvoicePayload {
   invoiceNumber: string
   customerId?: string
   supplierId?: string
+  accountId?: string
   purchaseOrderId?: string
   description?: string
   totalAmount: number

@@ -64,7 +64,7 @@
       <template v-else>
         <!-- INVOICES TAB -->
         <div v-if="activeTab === 'invoices'">
-          <div class="flex items-center gap-3 mb-4">
+          <div class="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center">
             <div class="relative flex-1 max-w-md">
               <svg
                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
@@ -86,6 +86,15 @@
                 class="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
+            <select
+              v-model="filterInvoiceAccount"
+              class="rounded-2xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-slate-300"
+            >
+              <option value="">ทุกบัญชี</option>
+              <option v-for="acc in store.accounts" :key="acc.id" :value="acc.id">
+                {{ acc.accountName }}
+              </option>
+            </select>
             <select
               v-model="filterInvoiceStatus"
               class="rounded-2xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-slate-300"
@@ -642,18 +651,20 @@ const paymentMethods = [
 
 // --- Filters ---
 const searchInvoice = ref('')
+const filterInvoiceAccount = ref('')
 const filterInvoiceStatus = ref('')
 const filteredInvoices = computed(() => store.invoices)
 
 async function loadInvoices(page = 1) {
   await store.fetchInvoices({
     searchTerm: searchInvoice.value.trim() || undefined,
+    accountId: filterInvoiceAccount.value || undefined,
     status: filterInvoiceStatus.value || undefined,
     pageNumber: page,
   })
 }
 
-watch([searchInvoice, filterInvoiceStatus], () => loadInvoices(1))
+watch([searchInvoice, filterInvoiceAccount, filterInvoiceStatus], () => loadInvoices(1))
 
 // --- Modal state ---
 const modalLoading = ref(false)

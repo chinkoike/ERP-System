@@ -6,6 +6,7 @@ public class InvoiceDto
     public string InvoiceNumber { get; set; } = string.Empty;
     public Guid CustomerId { get; set; }
     public Guid SupplierId { get; set; }
+    public Guid? AccountId { get; set; }
     public Guid? PurchaseOrderId { get; set; }
     public decimal TotalAmount { get; set; }
     public string? Description { get; set; }

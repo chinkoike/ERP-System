@@ -8,6 +8,7 @@ public class CreateInvoiceDto
     public string InvoiceNumber { get; set; } = string.Empty;
     public Guid? CustomerId { get; set; }
     public Guid? SupplierId { get; set; }
+    public Guid? AccountId { get; set; }
     public Guid? PurchaseOrderId { get; set; }
 
     [StringLength(500)]

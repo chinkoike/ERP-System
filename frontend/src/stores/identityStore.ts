@@ -23,6 +23,7 @@ export const useIdentityStore = defineStore('identity', () => {
   async function fetchUsers(
     filter: {
       searchTerm?: string
+      roleId?: string
       isActive?: boolean | null
       pageNumber?: number
       pageSize?: number
@@ -33,6 +34,7 @@ export const useIdentityStore = defineStore('identity', () => {
     try {
       const result = await identityService.searchUsers({
         searchTerm: filter.searchTerm,
+        roleId: filter.roleId,
         isActive: filter.isActive,
         pageNumber: filter.pageNumber ?? currentPage.value,
         pageSize: filter.pageSize ?? pageSize.value,

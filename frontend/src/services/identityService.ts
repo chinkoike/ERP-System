@@ -17,6 +17,7 @@ export const identityService = {
   },
   async searchUsers(filter: {
     searchTerm?: string
+    roleId?: string
     isActive?: boolean | null
     pageNumber?: number
     pageSize?: number

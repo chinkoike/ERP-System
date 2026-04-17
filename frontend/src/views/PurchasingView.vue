@@ -64,7 +64,7 @@
       <template v-else>
         <!-- PURCHASE ORDERS TAB -->
         <div v-if="activeTab === 'orders'">
-          <div class="flex items-center gap-3 mb-4">
+          <div class="flex flex-col gap-3 mb-4 lg:flex-row lg:items-center">
             <div class="relative flex-1 max-w-md">
               <svg
                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
@@ -86,6 +86,15 @@
                 class="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-300"
               />
             </div>
+            <select
+              v-model="filterPoSupplier"
+              class="rounded-2xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-slate-300"
+            >
+              <option value="">ทุก Supplier</option>
+              <option v-for="supplier in store.suppliers" :key="supplier.id" :value="supplier.id">
+                {{ supplier.name }}
+              </option>
+            </select>
             <select
               v-model="filterPoStatus"
               class="rounded-2xl border border-slate-200 bg-white py-2 px-4 text-sm text-slate-700 outline-none cursor-pointer focus:ring-2 focus:ring-slate-300"
@@ -614,18 +623,20 @@ const poStatuses = [
 ]
 
 const searchPo = ref('')
+const filterPoSupplier = ref('')
 const filterPoStatus = ref('')
 const filteredPo = computed(() => store.purchaseOrders)
 
 async function loadPurchaseOrders(page = 1) {
   await store.fetchPurchaseOrders({
     searchTerm: searchPo.value.trim() || undefined,
+    supplierId: filterPoSupplier.value || undefined,
     status: filterPoStatus.value || undefined,
     pageNumber: page,
   })
 }
 
-watch([searchPo, filterPoStatus], () => loadPurchaseOrders(1))
+watch([searchPo, filterPoSupplier, filterPoStatus], () => loadPurchaseOrders(1))
 const searchSupplier = ref('')
 const filteredSuppliers = computed(() =>
   store.suppliers.filter(

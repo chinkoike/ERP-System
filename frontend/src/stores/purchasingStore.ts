@@ -23,6 +23,7 @@ export const usePurchasingStore = defineStore('purchasing', () => {
   async function fetchPurchaseOrders(
     filter: {
       searchTerm?: string
+      supplierId?: string
       status?: string
       pageNumber?: number
       pageSize?: number
@@ -33,6 +34,7 @@ export const usePurchasingStore = defineStore('purchasing', () => {
     try {
       const result = await purchasingService.searchPurchaseOrders({
         searchTerm: filter.searchTerm,
+        supplierId: filter.supplierId,
         status: filter.status,
         pageNumber: filter.pageNumber ?? currentPage.value,
         pageSize: filter.pageSize ?? pageSize.value,

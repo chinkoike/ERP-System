@@ -18,6 +18,9 @@ export const financeService = {
   },
   async searchInvoices(filter: {
     searchTerm?: string
+    customerId?: string
+    supplierId?: string
+    accountId?: string
     status?: string
     pageNumber?: number
     pageSize?: number
