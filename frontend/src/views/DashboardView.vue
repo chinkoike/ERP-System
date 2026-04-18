@@ -10,24 +10,44 @@
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="flex items-center justify-center py-24">
-        <svg class="animate-spin h-5 w-5 text-slate-300" fill="none" viewBox="0 0 24 24">
-          <circle
-            class="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            stroke-width="4"
-          />
-          <path
-            class="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-          />
-        </svg>
-      </div>
+      <div v-if="loading" class="animate-pulse">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div
+            v-for="i in 4"
+            :key="i"
+            class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"
+          >
+            <div class="flex items-start justify-between mb-3">
+              <div class="h-3 w-20 bg-slate-100 rounded"></div>
+              <div class="h-8 w-8 bg-slate-50 rounded-xl"></div>
+            </div>
+            <div class="h-8 w-28 bg-slate-100 rounded mb-2"></div>
+            <div class="h-3 w-24 bg-slate-50 rounded"></div>
+          </div>
+        </div>
 
+        <div class="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-50">
+            <div class="h-4 w-32 bg-slate-100 rounded"></div>
+          </div>
+          <div class="p-6 space-y-4">
+            <div
+              v-for="i in 5"
+              :key="i"
+              class="flex items-center justify-between py-2 border-b border-slate-50 last:border-0"
+            >
+              <div class="flex gap-4">
+                <div class="h-4 w-16 bg-slate-100 rounded"></div>
+                <div class="h-4 w-32 bg-slate-50 rounded"></div>
+              </div>
+              <div class="flex gap-8">
+                <div class="h-4 w-20 bg-slate-50 rounded hidden md:block"></div>
+                <div class="h-4 w-12 bg-slate-100 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- Error -->
       <div
         v-else-if="error"
