@@ -9,15 +9,9 @@
           class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm outline-none focus:ring-2 focus:ring-slate-300 transition-all"
         />
       </div>
-      <button
-        @click="$emit('add-click')"
-        class="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
-      >
-        + เพิ่มหมวดหมู่
-      </button>
     </div>
 
-    <TableSkeleton v-if="loading && !isSearching" :rows="5" />
+    <TableSkeleton v-if="loading" :rows="5" />
 
     <div v-else class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
       <table class="min-w-full">

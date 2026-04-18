@@ -92,8 +92,8 @@ public class FinanceService : IFinanceService
             PurchaseOrderId = dto.PurchaseOrderId,
             TotalAmount = dto.TotalAmount,
             AmountDue = dto.AmountDue,
-            InvoiceDate = dto.InvoiceDate == default ? DateTime.UtcNow : dto.InvoiceDate,
-            DueDate = dto.DueDate,
+            InvoiceDate = dto.InvoiceDate.ToUniversalTime(),
+            DueDate = dto.DueDate.ToUniversalTime(),
             Status = InvoiceStatus.Issued,
             Description = $"ใบแจ้งหนี้อัตโนมัติจาก PO: {dto.PurchaseOrderId}",
             CreatedAt = DateTime.UtcNow,
@@ -209,7 +209,7 @@ public class FinanceService : IFinanceService
             InvoiceId = dto.InvoiceId,
             AccountId = dto.AccountId,
             AmountPaid = dto.AmountPaid,
-            PaymentDate = dto.PaymentDate,
+            PaymentDate = dto.PaymentDate.ToUniversalTime(),
             PaymentMethod = Enum.TryParse<PaymentMethod>(dto.PaymentMethod, true, out var method) ? method : PaymentMethod.Others,
             ReferenceNumber = dto.ReferenceNumber,
             CreatedAt = DateTime.UtcNow,
@@ -275,8 +275,8 @@ public class FinanceService : IFinanceService
         TotalAmount = invoice.TotalAmount,
         Description = invoice.Description,
         AmountDue = invoice.AmountDue,
-        InvoiceDate = invoice.InvoiceDate,
-        DueDate = invoice.DueDate,
+        InvoiceDate = invoice.InvoiceDate.ToUniversalTime(),
+        DueDate = invoice.DueDate.ToUniversalTime(),
         Status = invoice.Status.ToString()
     };
 
@@ -286,7 +286,7 @@ public class FinanceService : IFinanceService
         InvoiceId = payment.InvoiceId,
         AccountId = payment.AccountId,
         AmountPaid = payment.AmountPaid,
-        PaymentDate = payment.PaymentDate,
+        PaymentDate = payment.PaymentDate.ToUniversalTime(),
         PaymentMethod = payment.PaymentMethod.ToString(),
         ReferenceNumber = payment.ReferenceNumber
     };

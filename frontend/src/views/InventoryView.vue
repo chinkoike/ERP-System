@@ -7,10 +7,18 @@
           <p class="text-sm text-slate-500 mt-2">จัดการสินค้าและหมวดหมู่ในระบบ</p>
         </div>
         <button
+          v-if="activeTab === 'products'"
           @click="openProductModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 shadow-sm"
         >
           <span class="text-lg leading-none">+</span> เพิ่มสินค้า
+        </button>
+        <button
+          v-if="activeTab === 'categories'"
+          @click="openCategoryModal()"
+          class="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
+        >
+          + เพิ่มหมวดหมู่
         </button>
       </div>
 

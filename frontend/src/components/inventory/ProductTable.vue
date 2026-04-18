@@ -130,7 +130,7 @@
 
     <div
       v-if="store.products.length > 0"
-      class="flex items-center justify-between px-6 py-4 text-sm text-slate-500"
+      class="flex items-center justify-between px-6 py-4 bg-white rounded-b-3xl text-sm text-slate-500"
     >
       <div>แสดง {{ store.products.length }} รายการ</div>
       <div class="flex items-center gap-2">
