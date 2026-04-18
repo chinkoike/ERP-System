@@ -1,14 +1,14 @@
 <template>
   <aside
     :class="collapsed ? 'w-16' : 'w-56'"
-    class="flex h-screen flex-col border-r border-slate-100 bg-white transition-all duration-200 flex-shrink-0"
+    class="flex h-screen flex-col border-r border-slate-100 bg-white transition-all duration-200 shrink-0"
   >
     <!-- Logo -->
     <div
       class="flex h-16 items-center border-b border-slate-100 px-4"
       :class="collapsed ? 'justify-center' : 'gap-3'"
     >
-      <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-900">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900">
         <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2">
           <path
             stroke-linecap="round"
@@ -42,7 +42,7 @@
           ]"
           class="flex w-full items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-all duration-150"
         >
-          <component :is="item.icon" class="h-4 w-4 flex-shrink-0" />
+          <component :is="item.icon" class="h-4 w-4 shrink-0" />
           <span v-if="!collapsed" class="truncate">{{ item.label }}</span>
         </button>
       </router-link>
@@ -56,7 +56,7 @@
         class="flex items-center gap-3 rounded-xl py-2.5"
       >
         <div
-          class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-600"
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-600"
         >
           {{ userInitial }}
         </div>
@@ -75,7 +75,7 @@
         :class="collapsed ? 'justify-center px-0' : 'px-3'"
         class="flex w-full items-center gap-3 rounded-xl py-2.5 text-sm font-medium text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
       >
-        <LogoutIcon class="h-4 w-4 flex-shrink-0" />
+        <LogoutIcon class="h-4 w-4 shrink-0" />
         <span v-if="!collapsed">Sign out</span>
       </button>
 
@@ -88,7 +88,7 @@
       >
         <ChevronIcon
           :class="collapsed ? 'rotate-180' : ''"
-          class="h-4 w-4 flex-shrink-0 transition-transform duration-200"
+          class="h-4 w-4 shrink-0 transition-transform duration-200"
         />
         <span v-if="!collapsed">ย่อเมนู</span>
       </button>

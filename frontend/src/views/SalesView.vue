@@ -125,7 +125,7 @@ import OrderTable from '@/components/sales/OrderTable.vue'
 import CustomerList from '@/components/sales/CustomerList.vue'
 import OrderModal from '@/components/sales/OrderModal.vue'
 import CustomerModal from '@/components/sales/CustomerModal.vue'
-import ConfirmModal from '@/components/sales/ConfirmModal.vue'
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const store = useSalesStore()
 const inventoryStore = useInventoryStore()

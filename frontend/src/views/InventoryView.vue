@@ -45,13 +45,13 @@
           v-if="activeTab === 'products'"
           @edit="openProductModal"
           @adjust-stock="openStockAdjustment"
-          @delete="(type, id, name) => confirmDelete(type, id, name)"
+          @delete="openDeleteConfirm"
         />
 
         <CategoryTable
           v-if="activeTab === 'categories'"
           @edit="openCategoryModal"
-          @delete="(type: 'category', id: string, name: string) => confirmDelete(type, id, name)"
+          @delete="openDeleteConfirm"
           @add-click="openCategoryModal()"
         />
       </div>
@@ -75,17 +75,20 @@
       @success="refreshProducts"
     />
 
-    <DeleteConfirmModal
-      v-model="showDeleteModal"
-      :title="deleteTarget.type === 'product' ? 'ลบสินค้า' : 'ลบหมวดหมู่'"
-      :item-name="deleteTarget.name"
-      @confirm="handleDelete"
+    <ConfirmModal
+      :show="showConfirmModal"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :confirm-label="confirmBtn"
+      :loading="modalLoading"
+      @close="showConfirmModal = false"
+      @confirm="confirmAction"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { useInventoryStore } from '@/stores/inventoryStore'
 
 // Components
@@ -94,8 +97,7 @@ import CategoryTable from '@/components/inventory/CategoryTable.vue'
 import ProductModal from '@/components/inventory/ProductModal.vue'
 import CategoryModal from '@/components/inventory/CategoryModal.vue'
 import StockAdjustmentModal from '@/components/inventory/StockAdjustmentModal.vue'
-import DeleteConfirmModal from '@/components/common/DeleteConfirmModal.vue'
-
+import ConfirmModal from '@/components/common/ConfirmModal.vue'
 const store = useInventoryStore()
 const activeTab = ref<'products' | 'categories'>('products')
 const tabs = [
@@ -113,9 +115,6 @@ const editingCategory = ref(null)
 const showStockModal = ref(false)
 const stockTarget = ref(null)
 
-const showDeleteModal = ref(false)
-const deleteTarget = reactive({ type: '' as 'product' | 'category' | '', id: '', name: '' })
-
 // --- Modal Logic ---
 const openProductModal = (product = null) => {
   editingProduct.value = product
@@ -132,33 +131,44 @@ const openStockAdjustment = (product = null) => {
   showStockModal.value = true
 }
 
-const confirmDelete = (type: 'product' | 'category', id: string, name: string) => {
-  deleteTarget.type = type
-  deleteTarget.id = id
-  deleteTarget.name = name
-  showDeleteModal.value = true
-}
-
 // --- Actions ---
 const refreshProducts = () => store.fetchProducts({ pageNumber: 1 })
 const refreshCategories = () => store.fetchCategories({ pageNumber: 1 })
 
-const handleDelete = async () => {
-  try {
-    if (deleteTarget.type === 'product') {
-      await store.deleteProduct(deleteTarget.id)
-    } else if (deleteTarget.type === 'category') {
-      await store.deleteCategory(deleteTarget.id)
-    }
+// --- Confirm Modal States ---
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmBtn = ref('')
+const modalLoading = ref(false)
+const confirmAction = ref<() => Promise<void>>(async () => {})
 
-    showDeleteModal.value = false
-    activeTab.value === 'products' ? refreshProducts() : refreshCategories()
-  } catch (error: unknown) {
-    const errorMsg =
-      (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-      'ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่อีกครั้ง'
-    alert(`ข้อผิดพลาด: ${errorMsg}`)
-    console.error('Delete failed:', error)
+// --- ฟังก์ชันกลางสำหรับยืนยันการลบ ---
+function openDeleteConfirm(type: 'product' | 'category', id: string, name: string) {
+  confirmTitle.value = type === 'product' ? 'ยืนยันการลบสินค้า' : 'ยืนยันการลบหมวดหมู่'
+  confirmMessage.value = `คุณแน่ใจหรือไม่ที่จะลบ "${name}"? การกระทำนี้ไม่สามารถย้อนคืนได้`
+  confirmBtn.value = 'ลบข้อมูล'
+
+  confirmAction.value = async () => {
+    modalLoading.value = true
+    try {
+      if (type === 'product') {
+        await store.deleteProduct(id)
+        refreshProducts()
+      } else {
+        await store.deleteCategory(id)
+        refreshCategories()
+      }
+      showConfirmModal.value = false
+    } catch (error: unknown) {
+      alert(
+        (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+          'เกิดข้อผิดพลาดในการลบ',
+      )
+    } finally {
+      modalLoading.value = false
+    }
   }
+  showConfirmModal.value = true
 }
 </script>
