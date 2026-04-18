@@ -40,7 +40,7 @@
         </button>
       </div>
       <!-- Loading -->
-      <TableSkeleton v-if="loading" :rows="6" />
+      <TableSkeleton v-if="isInitialLoading" :rows="6" />
       <!-- Orders Tab -->
       <div v-if="activeTab === 'orders'">
         <OrderTable
@@ -138,7 +138,6 @@ const tabs = [
 
 const isInitialLoading = ref(true)
 const isSearching = ref(false)
-const loading = ref(true)
 const products = computed(() => inventoryStore.products)
 
 const statusMap: Record<string, number> = {
@@ -169,7 +168,6 @@ async function loadOrders(page = 1) {
   } finally {
     isInitialLoading.value = false
     isSearching.value = false
-    loading.value = false
   }
 }
 
