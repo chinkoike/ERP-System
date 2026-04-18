@@ -41,38 +41,41 @@
       </div>
       <!-- Loading -->
       <TableSkeleton v-if="isInitialLoading" :rows="6" />
-      <!-- Orders Tab -->
-      <div v-if="activeTab === 'orders'">
-        <OrderTable
-          :orders="store.orders"
-          :total-items="store.totalItems"
-          :current-page="store.currentPage"
-          :total-pages="store.totalPages"
-          :is-initial-loading="isInitialLoading"
-          :is-searching="isSearching"
-          v-model:searchOrder="searchOrder"
-          v-model:filterStatus="filterStatus"
-          @statusChange="handleStatusChange"
-          @cancel="confirmCancel"
-          @pageChange="loadOrders"
-        />
-      </div>
 
-      <!-- Customers Tab -->
-      <div v-if="activeTab === 'customers'">
-        <CustomerList
-          :customers="store.customers"
-          :total-items="store.customerTotal"
-          :current-page="store.customerPages"
-          :total-pages="store.customerPages"
-          :is-searching="isSearching"
-          :is-initial-loading="isInitialLoading"
-          v-model:searchCustomer="searchCustomer"
-          @edit="openCustomerModal"
-          @delete="confirmDeleteCustomer"
-          @pageChange="loadCustomers"
-        />
-      </div>
+      <template v-else>
+        <!-- Orders Tab -->
+        <div v-if="activeTab === 'orders'">
+          <OrderTable
+            :orders="store.orders"
+            :total-items="store.totalItems"
+            :current-page="store.currentPage"
+            :total-pages="store.totalPages"
+            :is-initial-loading="isInitialLoading"
+            :is-searching="isSearching"
+            v-model:searchOrder="searchOrder"
+            v-model:filterStatus="filterStatus"
+            @statusChange="handleStatusChange"
+            @cancel="confirmCancel"
+            @pageChange="loadOrders"
+          />
+        </div>
+
+        <!-- Customers Tab -->
+        <div v-if="activeTab === 'customers'">
+          <CustomerList
+            :customers="store.customers"
+            :total-items="store.customerTotal"
+            :current-page="store.customerPages"
+            :total-pages="store.customerPages"
+            :is-searching="isSearching"
+            :is-initial-loading="isInitialLoading"
+            v-model:searchCustomer="searchCustomer"
+            @edit="openCustomerModal"
+            @delete="confirmDeleteCustomer"
+            @pageChange="loadCustomers"
+          />
+        </div>
+      </template>
     </main>
 
     <!-- Order Modal -->
