@@ -154,6 +154,23 @@
             </svg>
             {{ authStore.loading ? 'Signing in...' : 'Sign in' }}
           </button>
+          <!-- Demo Login  -->
+          <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center">
+              <span class="w-full border-t border-slate-100"></span>
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+              <span class="bg-green-100 px-2 text-slate-800 rounded-3xl">Or testing?</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            @click="handleDemoLogin"
+            class="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-200 hover:border-slate-300"
+          >
+            Demo Login (Click & See)
+          </button>
         </form>
       </div>
 
@@ -204,5 +221,12 @@ async function handleLogin() {
   } catch (e: unknown) {
     errorMessage.value = e instanceof Error ? e.message : 'Invalid username or password'
   }
+}
+
+async function handleDemoLogin() {
+  form.username = 'admin'
+  form.password = 'Password123!'
+
+  await handleLogin()
 }
 </script>
