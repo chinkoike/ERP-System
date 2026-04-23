@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://your-erp-api.com/api';
+  static const String baseUrl = 'http://localhost:5049/api';
 
   // Auth endpoints
   static const String login = '/users/login';

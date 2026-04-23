@@ -238,7 +238,7 @@ class _UserCard extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            UserAvatar(name: user.fullName, size: 44),
+            UserAvatar(name: user.fullName!, size: 44),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -248,7 +248,7 @@ class _UserCard extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          user.fullName,
+                          user.fullName!,
                           style: const TextStyle(
                             fontFamily: 'Sora',
                             fontWeight: FontWeight.w600,

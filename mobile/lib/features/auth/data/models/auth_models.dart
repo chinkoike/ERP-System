@@ -11,7 +11,6 @@ class LoginRequestModel {
 
   factory LoginRequestModel.fromJson(Map<String, dynamic> json) =>
       _$LoginRequestModelFromJson(json);
-
   Map<String, dynamic> toJson() => _$LoginRequestModelToJson(this);
 }
 
@@ -33,17 +32,18 @@ class RegisterRequestModel {
 
   factory RegisterRequestModel.fromJson(Map<String, dynamic> json) =>
       _$RegisterRequestModelFromJson(json);
-
   Map<String, dynamic> toJson() => _$RegisterRequestModelToJson(this);
 }
 
 @JsonSerializable()
 class AuthResponseModel {
+  @JsonKey(name: 'token')
   final String? accessToken;
   final String? refreshToken;
   final bool isSuccess;
   final String? message;
   final UserModel? user;
+  final List<String>? roles;
 
   const AuthResponseModel({
     this.accessToken,
@@ -51,11 +51,11 @@ class AuthResponseModel {
     required this.isSuccess,
     this.message,
     this.user,
+    this.roles,
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) =>
       _$AuthResponseModelFromJson(json);
-
   Map<String, dynamic> toJson() => _$AuthResponseModelToJson(this);
 }
 
@@ -66,9 +66,16 @@ class UserModel {
   final String email;
   final String? firstName;
   final String? lastName;
+  final String? fullName;
+  final String? jobTitle;
+  final String? department;
   final bool isActive;
   final List<String> roles;
   final DateTime? createdAt;
+  final DateTime? lastLoginAt;
+  final String? createdBy;
+  final DateTime? updatedAt;
+  final String? updatedBy;
 
   const UserModel({
     required this.id,
@@ -76,27 +83,34 @@ class UserModel {
     required this.email,
     this.firstName,
     this.lastName,
+    this.fullName,
+    this.jobTitle,
+    this.department,
     required this.isActive,
     required this.roles,
     this.createdAt,
+    this.lastLoginAt,
+    this.createdBy,
+    this.updatedAt,
+    this.updatedBy,
   });
 
-  String get fullName {
+  String get displayName {
+    if (fullName != null && fullName!.isNotEmpty) return fullName!;
     if (firstName != null && lastName != null) return '$firstName $lastName';
     if (firstName != null) return firstName!;
     return username;
   }
 
   String get initials {
-    final name = fullName;
-    final parts = name.split(' ');
+    final name = displayName;
+    final parts = name.trim().split(' ');
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
-
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 }
 
@@ -116,7 +130,6 @@ class RoleModel {
 
   factory RoleModel.fromJson(Map<String, dynamic> json) =>
       _$RoleModelFromJson(json);
-
   Map<String, dynamic> toJson() => _$RoleModelToJson(this);
 }
 
@@ -124,17 +137,22 @@ class RoleModel {
 class PagedResultModel<T> {
   final List<T> items;
   final int totalCount;
+
+  // API ส่ง "pageNumber" ไม่ใช่ "page"
+  @JsonKey(name: 'pageNumber')
   final int page;
+
   final int pageSize;
+  final int totalPages;
 
   const PagedResultModel({
     required this.items,
     required this.totalCount,
     required this.page,
     required this.pageSize,
+    required this.totalPages,
   });
 
-  int get totalPages => (totalCount / pageSize).ceil();
   bool get hasNext => page < totalPages;
   bool get hasPrev => page > 1;
 

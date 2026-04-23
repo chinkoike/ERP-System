@@ -11,8 +11,7 @@ import '../../data/repositories/users_repository.dart';
 import '../providers/users_provider.dart';
 import '../../../auth/data/models/auth_models.dart';
 
-final _userDetailProvider =
-    FutureProvider.family<UserModel, String>((ref, id) {
+final _userDetailProvider = FutureProvider.family<UserModel, String>((ref, id) {
   return ref.read(usersRepositoryProvider).getUserById(id);
 });
 
@@ -75,10 +74,10 @@ class _UserDetailBody extends ConsumerWidget {
             ),
             child: Column(
               children: [
-                UserAvatar(name: user.fullName, size: 72),
+                UserAvatar(name: user.fullName!, size: 72),
                 const SizedBox(height: 14),
                 Text(
-                  user.fullName,
+                  user.fullName!,
                   style: const TextStyle(
                     fontFamily: 'Sora',
                     fontWeight: FontWeight.w700,
@@ -106,7 +105,8 @@ class _UserDetailBody extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
-                    children: user.roles.map((r) => RoleBadge(role: r)).toList(),
+                    children:
+                        user.roles.map((r) => RoleBadge(role: r)).toList(),
                   ),
                 ],
               ],
@@ -139,11 +139,20 @@ class _UserDetailBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-                InfoRow(icon: Icons.email_outlined, label: 'Email', value: user.email),
+                InfoRow(
+                    icon: Icons.email_outlined,
+                    label: 'Email',
+                    value: user.email),
                 const Divider(height: 1, indent: 16),
-                InfoRow(icon: Icons.badge_outlined, label: 'First Name', value: user.firstName ?? '—'),
+                InfoRow(
+                    icon: Icons.badge_outlined,
+                    label: 'First Name',
+                    value: user.firstName ?? '—'),
                 const Divider(height: 1, indent: 16),
-                InfoRow(icon: Icons.badge_outlined, label: 'Last Name', value: user.lastName ?? '—'),
+                InfoRow(
+                    icon: Icons.badge_outlined,
+                    label: 'Last Name',
+                    value: user.lastName ?? '—'),
                 const Divider(height: 1, indent: 16),
                 InfoRow(
                   icon: Icons.calendar_today_outlined,
@@ -254,7 +263,8 @@ class _UserDetailBody extends ConsumerWidget {
             style: TextStyle(fontFamily: 'Sora', color: AppColors.textPrimary)),
         content: Text(
           'Are you sure you want to delete "${user.fullName}"? This cannot be undone.',
-          style: const TextStyle(fontFamily: 'Sora', color: AppColors.textSecondary),
+          style: const TextStyle(
+              fontFamily: 'Sora', color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(

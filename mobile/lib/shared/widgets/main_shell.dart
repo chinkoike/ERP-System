@@ -7,8 +7,10 @@ class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.child});
 
   static const _tabs = [
-    _TabItem(icon: Icons.grid_view_rounded, label: 'Dashboard', path: '/dashboard'),
-    _TabItem(icon: Icons.people_outline_rounded, label: 'Users', path: '/users'),
+    _TabItem(
+        icon: Icons.grid_view_rounded, label: 'Dashboard', path: '/dashboard'),
+    _TabItem(
+        icon: Icons.people_outline_rounded, label: 'Users', path: '/users'),
     _TabItem(icon: Icons.shield_outlined, label: 'Roles', path: '/roles'),
   ];
 
@@ -50,7 +52,8 @@ class MainShell extends StatelessWidget {
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
                             decoration: selected
                                 ? BoxDecoration(
                                     color: AppColors.accentGlow,
@@ -60,7 +63,9 @@ class MainShell extends StatelessWidget {
                             child: Icon(
                               tab.icon,
                               size: 20,
-                              color: selected ? AppColors.accent : AppColors.textMuted,
+                              color: selected
+                                  ? AppColors.accent
+                                  : AppColors.textMuted,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -69,8 +74,11 @@ class MainShell extends StatelessWidget {
                             style: TextStyle(
                               fontFamily: 'Sora',
                               fontSize: 10,
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                              color: selected ? AppColors.accent : AppColors.textMuted,
+                              fontWeight:
+                                  selected ? FontWeight.w600 : FontWeight.w400,
+                              color: selected
+                                  ? AppColors.accent
+                                  : AppColors.textMuted,
                             ),
                           ),
                         ],

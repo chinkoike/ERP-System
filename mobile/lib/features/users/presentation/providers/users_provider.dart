@@ -64,6 +64,7 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
       final result = await _repo.searchUsers(
         query: q.isEmpty ? null : q,
         isActive: isActive ?? state.filterActive,
+        page: 1,
       );
       state = state.copyWith(isLoading: false, result: result);
     } catch (e) {
@@ -81,18 +82,24 @@ class UserSearchNotifier extends StateNotifier<UserSearchState> {
         isActive: state.filterActive,
         page: nextPage,
       );
-      // Append items
-      final existing = state.result!.items;
+
+      // Merge items จาก page ก่อนหน้า + page ใหม่
       final merged = PagedResultModel<UserModel>(
-        items: [...existing, ...result.items],
+        items: [...state.result!.items, ...result.items],
         totalCount: result.totalCount,
-        page: result.page,
+        page: result.page, // pageNumber จาก API
         pageSize: result.pageSize,
+        totalPages: result.totalPages, // รับค่าจาก API โดยตรง
       );
       state = state.copyWith(isLoading: false, result: merged);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  void setFilter(bool? isActive) {
+    state = state.copyWith(filterActive: isActive);
+    search(isActive: isActive);
   }
 }
 
@@ -101,7 +108,7 @@ final userSearchProvider =
   return UserSearchNotifier(ref.read(usersRepositoryProvider));
 });
 
-// ─── User form (create/update) ────────────────────────────────────────────────
+// ─── User form (create / update / delete) ────────────────────────────────────
 
 class UserFormNotifier extends StateNotifier<AsyncValue<void>> {
   final UsersRepository _repo;
@@ -132,7 +139,8 @@ class UserFormNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  Future<bool> update(String id, {
+  Future<bool> update(
+    String id, {
     String? firstName,
     String? lastName,
     String? email,
@@ -141,7 +149,10 @@ class UserFormNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _repo.updateUser(id,
-          firstName: firstName, lastName: lastName, email: email, isActive: isActive);
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          isActive: isActive);
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
