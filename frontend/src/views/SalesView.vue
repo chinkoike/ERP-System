@@ -8,14 +8,14 @@
           <p class="text-sm text-slate-500 mt-2">จัดการ Order และลูกค้า</p>
         </div>
         <button
-          v-if="authStore.isAdmin || authStore.isManager"
+          v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
           @click="openOrderModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
           <span class="text-lg leading-none">+</span> สร้าง Order
         </button>
         <button
-          v-if="authStore.isAdmin || authStore.isManager"
+          v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
           @click="openCustomerModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >

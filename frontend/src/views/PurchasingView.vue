@@ -8,7 +8,7 @@
           <p class="mt-2 text-sm text-slate-500">จัดการใบสั่งซื้อและผู้ขาย</p>
         </div>
         <button
-          v-if="authStore.isAdmin || authStore.isManager"
+          v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
           @click="openPoModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
