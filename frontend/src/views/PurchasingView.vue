@@ -8,14 +8,14 @@
           <p class="mt-2 text-sm text-slate-500">จัดการใบสั่งซื้อและผู้ขาย</p>
         </div>
         <button
-          v-if="activeTab === 'orders'"
+          v-if="authStore.isAdmin || authStore.isManager"
           @click="openPoModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
           <span class="text-lg leading-none">+</span> สร้าง PO
         </button>
         <button
-          v-if="activeTab === 'suppliers'"
+          v-if="authStore.isAdmin || authStore.isManager"
           @click="openSupplierModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
@@ -124,6 +124,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { usePurchasingStore } from '@/stores/purchasingStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
+import { useAuthStore } from '@/stores/authStore'
 import type {
   PurchaseOrder,
   PurchaseOrderItem,
@@ -143,6 +144,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const store = usePurchasingStore()
 const inventoryStore = useInventoryStore()
+const authStore = useAuthStore()
 
 const products = computed(() => inventoryStore.products)
 

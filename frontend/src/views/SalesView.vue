@@ -8,14 +8,14 @@
           <p class="text-sm text-slate-500 mt-2">จัดการ Order และลูกค้า</p>
         </div>
         <button
-          v-if="activeTab === 'orders'"
+          v-if="authStore.isAdmin || authStore.isManager"
           @click="openOrderModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
           <span class="text-lg leading-none">+</span> สร้าง Order
         </button>
         <button
-          v-if="activeTab === 'customers'"
+          v-if="authStore.isAdmin || authStore.isManager"
           @click="openCustomerModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
@@ -116,6 +116,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useSalesStore } from '@/stores/salesStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
+import { useAuthStore } from '@/stores/authStore'
 import type {
   Customer,
   OrderSummary,
@@ -132,6 +133,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const store = useSalesStore()
 const inventoryStore = useInventoryStore()
+const authStore = useAuthStore()
 
 const activeTab = ref<'orders' | 'customers'>('orders')
 const tabs = [

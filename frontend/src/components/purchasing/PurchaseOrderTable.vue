@@ -110,14 +110,17 @@
             <td class="px-6 py-4">
               <div class="flex items-center gap-2 justify-end">
                 <button
-                  v-if="po.status === 'Ordered' || po.status === 'Receiving'"
+                  v-if="
+                    (po.status === 'Ordered' || po.status === 'Receiving') &&
+                    (authStore.isAdmin || authStore.isManager)
+                  "
                   @click="$emit('receive', po)"
                   class="rounded-2xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50"
                 >
                   รับสินค้า
                 </button>
                 <button
-                  v-if="po.status === 'Ordered'"
+                  v-if="po.status === 'Ordered' && (authStore.isAdmin || authStore.isManager)"
                   @click="$emit('cancel', po)"
                   class="rounded-2xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
                 >
@@ -155,7 +158,10 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/authStore'
 import type { PurchaseOrder, PurchaseOrderStatus, Supplier } from '@/types/purchasing'
+
+const authStore = useAuthStore()
 
 defineProps<{
   purchaseOrders: PurchaseOrder[]

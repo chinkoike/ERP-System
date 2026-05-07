@@ -88,18 +88,21 @@
               <td class="px-6 py-4">
                 <div class="flex gap-2 justify-end">
                   <button
+                    v-if="authStore.isAdmin || authStore.isManager"
                     @click="emit('adjust-stock', p)"
                     class="rounded-2xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     ±Stock
                   </button>
                   <button
+                    v-if="authStore.isAdmin || authStore.isManager"
                     @click="emit('edit', p)"
                     class="rounded-2xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     แก้ไข
                   </button>
                   <button
+                    v-if="authStore.isAdmin || authStore.isManager"
                     @click="emit('delete', 'product', p.id, p.name)"
                     class="rounded-2xl border border-rose-200 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
                   >
@@ -158,10 +161,12 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
 import { useInventoryStore } from '@/stores/inventoryStore'
 import { formatCurrency, stockStatusClass, stockStatusLabel } from '@/utils/formatters'
 import TableSkeleton from '@/components/common/TableSkeleton.vue' // อย่าลืม import มาด้วยนะครับ
 
+const authStore = useAuthStore()
 const store = useInventoryStore()
 const loading = ref(true)
 const isSearching = ref(false)

@@ -7,14 +7,14 @@
           <p class="text-sm text-slate-500 mt-2">จัดการสินค้าและหมวดหมู่ในระบบ</p>
         </div>
         <button
-          v-if="activeTab === 'products'"
+          v-if="authStore.isAdmin || authStore.isManager"
           @click="openProductModal()"
           class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 shadow-sm"
         >
           <span class="text-lg leading-none">+</span> เพิ่มสินค้า
         </button>
         <button
-          v-if="activeTab === 'categories'"
+          v-if="authStore.isAdmin || authStore.isManager"
           @click="openCategoryModal()"
           class="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
         >
@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useInventoryStore } from '@/stores/inventoryStore'
+import { useAuthStore } from '@/stores/authStore'
 
 // Components
 import ProductTable from '@/components/inventory/ProductTable.vue'
@@ -99,6 +100,7 @@ import CategoryModal from '@/components/inventory/CategoryModal.vue'
 import StockAdjustmentModal from '@/components/inventory/StockAdjustmentModal.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 const store = useInventoryStore()
+const authStore = useAuthStore()
 const activeTab = ref<'products' | 'categories'>('products')
 const tabs = [
   { key: 'products', label: 'สินค้า' },
