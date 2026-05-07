@@ -88,14 +88,14 @@
               <td class="px-6 py-4">
                 <div class="flex gap-2 justify-end">
                   <button
-                    v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
+                    v-if="authStore.isAdmin || authStore.isManager"
                     @click="emit('adjust-stock', p)"
                     class="rounded-2xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     ±Stock
                   </button>
                   <button
-                    v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
+                    v-if="authStore.isAdmin || authStore.isManager"
                     @click="emit('edit', p)"
                     class="rounded-2xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                   >

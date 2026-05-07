@@ -12,6 +12,10 @@ class MainShell extends StatelessWidget {
     _TabItem(
         icon: Icons.people_outline_rounded, label: 'Users', path: '/users'),
     _TabItem(icon: Icons.shield_outlined, label: 'Roles', path: '/roles'),
+    _TabItem(
+        icon: Icons.shopping_cart_outlined,
+        label: 'Purchasing',
+        path: '/purchasing'),
   ];
 
   int _currentIndex(BuildContext context) {

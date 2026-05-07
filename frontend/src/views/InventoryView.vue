@@ -8,10 +8,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <button
-            v-if="
-              activeTab === 'products' &&
-              (authStore.isAdmin || authStore.isManager || authStore.isUser)
-            "
+            v-if="activeTab === 'products' && (authStore.isAdmin || authStore.isManager)"
             @click="openProductModal()"
             class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 shadow-sm"
           >

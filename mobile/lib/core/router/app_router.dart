@@ -6,6 +6,8 @@ import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
 import 'package:mobile/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/profile_screen.dart';
+import 'package:mobile/features/purchasing/presentation/screens/purchasing_screen.dart';
+import 'package:mobile/features/purchasing/presentation/screens/supplier_form_screen.dart';
 import 'package:mobile/features/roles/presentation/screens/role_form_screen.dart';
 import 'package:mobile/features/roles/presentation/screens/roles_screen.dart';
 import 'package:mobile/features/users/presentation/screens/user_detail_screen.dart';
@@ -14,8 +16,6 @@ import 'package:mobile/features/users/presentation/screens/users_screen.dart';
 import 'package:mobile/shared/widgets/main_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authNotifier = ref.watch(authProvider.notifier);
-
   return GoRouter(
     initialLocation: '/dashboard',
     redirect: (context, state) {
@@ -56,6 +56,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/roles',
             builder: (_, __) => const RolesScreen(),
           ),
+          GoRoute(
+            path: '/purchasing',
+            builder: (_, __) => const PurchasingScreen(),
+          ),
         ],
       ),
 
@@ -84,6 +88,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/roles/:id/edit',
         builder: (_, state) =>
             RoleFormScreen(roleId: state.pathParameters['id']),
+      ),
+
+      // ── Purchasing routes ────────────────────────────────────────────────
+      GoRoute(
+        path: '/purchasing/suppliers/create',
+        builder: (_, __) => const SupplierFormScreen(),
+      ),
+      GoRoute(
+        path: '/purchasing/suppliers/:id/edit',
+        builder: (_, state) =>
+            SupplierFormScreen(supplierId: state.pathParameters['id']),
       ),
 
       // ── Profile ──────────────────────────────────────────────────────────

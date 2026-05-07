@@ -164,6 +164,13 @@ class DashboardScreen extends ConsumerWidget {
                       subtitle: 'Create and configure roles',
                       onTap: () => context.go('/roles'),
                     ).animate().fadeIn(delay: 280.ms),
+                    const SizedBox(height: 8),
+                    _ActionCard(
+                      icon: Icons.shopping_cart_outlined,
+                      title: 'Purchasing',
+                      subtitle: 'Manage suppliers and purchase orders',
+                      onTap: () => context.go('/purchasing'),
+                    ).animate().fadeIn(delay: 320.ms),
                   ],
                 ),
               ),

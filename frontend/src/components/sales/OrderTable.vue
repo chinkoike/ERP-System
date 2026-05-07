@@ -134,7 +134,7 @@
                     v-if="
                       o.status !== 'Cancelled' &&
                       o.status !== 'Delivered' &&
-                      (authStore.isAdmin || authStore.isManager || authStore.isUser)
+                      (authStore.isAdmin || authStore.isManager)
                     "
                     @change="
                       $emit('statusChange', o.orderId, ($event.target as HTMLSelectElement).value)
@@ -147,10 +147,7 @@
                     </option>
                   </select>
                   <button
-                    v-if="
-                      o.status === 'Pending' &&
-                      (authStore.isAdmin || authStore.isManager || authStore.isUser)
-                    "
+                    v-if="o.status === 'Pending' && (authStore.isAdmin || authStore.isManager)"
                     @click="$emit('cancel', o)"
                     class="rounded-2xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 transition hover:bg-rose-50"
                   >

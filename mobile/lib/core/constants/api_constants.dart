@@ -15,6 +15,12 @@ class ApiConstants {
   // Roles endpoints
   static const String roles = '/roles';
 
+  // Purchasing endpoints
+  static const String purchasing = '/purchasing';
+  static const String purchasingSuppliers = '/purchasing/suppliers';
+  static const String purchaseOrders = '/purchasing/purchase-orders';
+  static const String purchaseOrdersSearch = '/purchasing/purchase-orders/search';
+
   // Timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
