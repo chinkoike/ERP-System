@@ -48,6 +48,7 @@ public class PurchaseOrderRepository : GenericRepository<PurchaseOrder>, IPurcha
     public async Task<PagedResult<PurchaseOrder>> SearchPurchaseOrdersAsync(PurchaseOrderFilterDto filter, CancellationToken cancellationToken = default)
     {
         var query = DbContext.Set<PurchaseOrder>()
+            .Include(po => po.Items)
             .Include(po => po.Supplier)
             .AsNoTracking();
 

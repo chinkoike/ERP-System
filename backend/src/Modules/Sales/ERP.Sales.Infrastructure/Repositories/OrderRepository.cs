@@ -50,7 +50,7 @@ public class OrderRepository : GenericRepository<Order>, IOrderRepository
 
     public async Task<PagedResult<Order>> SearchOrdersAsync(OrderFilterDto filter, CancellationToken cancellationToken = default)
     {
-        var query = Query().Include(o => o.Customer).AsQueryable();
+        var query = Query().Include(o => o.Customer).Include(o => o.Items).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
         {

@@ -429,7 +429,7 @@ public class SalesService : ISalesService
                     : "Unknown",
                 OrderDate = order.OrderDate,
                 TotalAmount = order.TotalAmount,
-                ItemCount = 0,
+                ItemCount = order.Items?.Count ?? 0,
                 Status = order.Status.ToString()
             }).ToList(),
             TotalCount = result.TotalCount,
