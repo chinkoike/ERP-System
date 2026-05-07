@@ -6,20 +6,25 @@
           <h1 class="text-3xl font-semibold text-slate-900">Inventory</h1>
           <p class="text-sm text-slate-500 mt-2">จัดการสินค้าและหมวดหมู่ในระบบ</p>
         </div>
-        <button
-          v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
-          @click="openProductModal()"
-          class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 shadow-sm"
-        >
-          <span class="text-lg leading-none">+</span> เพิ่มสินค้า
-        </button>
-        <button
-          v-if="authStore.isAdmin || authStore.isManager"
-          @click="openCategoryModal()"
-          class="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
-        >
-          + เพิ่มหมวดหมู่
-        </button>
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            v-if="
+              activeTab === 'products' &&
+              (authStore.isAdmin || authStore.isManager || authStore.isUser)
+            "
+            @click="openProductModal()"
+            class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 shadow-sm"
+          >
+            <span class="text-lg leading-none">+</span> เพิ่มสินค้า
+          </button>
+          <button
+            v-if="activeTab === 'categories' && (authStore.isAdmin || authStore.isManager)"
+            @click="openCategoryModal()"
+            class="rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
+          >
+            + เพิ่มหมวดหมู่
+          </button>
+        </div>
       </div>
 
       <div

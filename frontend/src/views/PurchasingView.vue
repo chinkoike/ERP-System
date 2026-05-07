@@ -7,20 +7,25 @@
           <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Purchasing</h1>
           <p class="mt-2 text-sm text-slate-500">จัดการใบสั่งซื้อและผู้ขาย</p>
         </div>
-        <button
-          v-if="authStore.isAdmin || authStore.isManager || authStore.isUser"
-          @click="openPoModal()"
-          class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-        >
-          <span class="text-lg leading-none">+</span> สร้าง PO
-        </button>
-        <button
-          v-if="authStore.isAdmin || authStore.isManager"
-          @click="openSupplierModal()"
-          class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-        >
-          <span class="text-lg leading-none">+</span> เพิ่ม Supplier
-        </button>
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            v-if="
+              activeTab === 'orders' &&
+              (authStore.isAdmin || authStore.isManager || authStore.isUser)
+            "
+            @click="openPoModal()"
+            class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            <span class="text-lg leading-none">+</span> สร้าง PO
+          </button>
+          <button
+            v-if="activeTab === 'suppliers' && (authStore.isAdmin || authStore.isManager)"
+            @click="openSupplierModal()"
+            class="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            <span class="text-lg leading-none">+</span> เพิ่ม Supplier
+          </button>
+        </div>
       </div>
 
       <!-- Tabs -->
